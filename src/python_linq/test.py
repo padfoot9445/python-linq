@@ -189,3 +189,23 @@ def test_peek():
     assert x.peek_n(4).to_list() == [0,1,2,3]
     assert x.peek_while(lambda y: y < 8).to_list() == list(range(8))
     assert x.to_list() == list(range(10))
+
+def test_zip():
+    assert Enumerable(range(10)).zip(range(2,5)).to_list() == list(zip(range(10), range(2,5)))
+
+def test_all():
+    assert Enumerable(range(10)).all(lambda x: x >= 0)
+    assert not Enumerable(range(10)).all(lambda x: x >= 5)
+
+def test_any():
+    assert Enumerable(range(10)).any(lambda x: x==3)
+    assert not Enumerable(range(10)).any(lambda x: x == 100)
+
+def test_neq():
+    assert Enumerable(range(10)).neq(Enumerable(range(11)))
+    assert not Enumerable(range(10)).neq(Enumerable(range(10)))
+
+def test_eq():
+    
+    assert not Enumerable(range(10)).eq(Enumerable(range(11)))
+    assert Enumerable(range(10)).eq(Enumerable(range(10)))
