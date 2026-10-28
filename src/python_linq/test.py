@@ -169,6 +169,12 @@ def test_skip_and_take():
         19,
     ]
 
+def test_take_exhausts_correctly():
+    enumerable = Enumerable(range(10))
+
+    enumerable.take(3).to_list()
+    assert enumerable.first() == 3
+
 
 def test_no_copy():
     j = (i for i in range(10))
