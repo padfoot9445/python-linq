@@ -16,6 +16,7 @@ class SelectEnumerable[T](BaseEnumerable[T]):
         def inner() -> Iterable[V]:
             for result_bundle in self.map(callback):
                 yield from result_bundle
+
         return Enumerable(inner())
 
     def tee(self, callback: Callable[[T], Any]) -> "Enumerable[T]":

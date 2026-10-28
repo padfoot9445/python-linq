@@ -5,6 +5,7 @@ lazy from .take_enumerable import TakeEnumerableException, TakeEnumerableExcepti
 lazy from .enumerable import Enumerable
 import pytest
 
+
 @pytest.mark.parametrize(
     "l",
     [
@@ -39,8 +40,22 @@ def test_filter_is_correct():
 
 def test_select_enumerable_returns_correct():
     assert Enumerable(range(5)).select(lambda x: x**2).to_list() == [0, 1, 4, 9, 16]
+
+
 def test_flat_map_enumerable_returns_correct():
-    assert Enumerable(range(5)).flat_map(lambda x: (1, x)).to_list() == [1, 0, 1, 1, 1, 2, 1,3,1,4]
+    assert Enumerable(range(5)).flat_map(lambda x: (1, x)).to_list() == [
+        1,
+        0,
+        1,
+        1,
+        1,
+        2,
+        1,
+        3,
+        1,
+        4,
+    ]
+
 
 def test_first_returns_correct():
     assert Enumerable([1, 2, 3]).first() == 1
@@ -108,10 +123,14 @@ def test_single_with_filter_too_many_matches_list_throws():
             exception.value.exception_case is TakeEnumerableExceptionCase.TooManyItems
         )
 
+
 def test_fold_returns_expected():
     assert Enumerable(range(5)).fold(lambda acc, x: acc + x) == sum(range(5))
-    assert Enumerable(range(5)).map(str).fold(lambda acc, x: acc + int(x), 0) == sum(range(5))
+    assert Enumerable(range(5)).map(str).fold(lambda acc, x: acc + int(x), 0) == sum(
+        range(5)
+    )
     assert Enumerable(range(5)).fold(lambda acc, x: acc + x, 5) == sum(range(5)) + 5
+
 
 def test_join_returns_expected():
     assert Enumerable(["a", "b", "c"]).join("d") == "adbdc"
