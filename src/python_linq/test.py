@@ -182,3 +182,10 @@ def test_copy():
     x2 = x1.shallow_copy()
     assert x1.to_list() == list(range(10))
     assert x2.to_list() == list(range(10))
+
+def test_peek():
+    x = Enumerable((i for i in range(10)))
+    assert x.peek() == 0
+    assert x.peek_n(4).to_list() == [0,1,2,3]
+    assert x.peek_while(lambda y: y < 8).to_list() == list(range(8))
+    assert x.to_list() == list(range(10))

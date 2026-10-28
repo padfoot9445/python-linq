@@ -1,6 +1,8 @@
 lazy from enum import StrEnum
 lazy from typing import Any, Callable
 
+lazy from .copy_enumerable import CopyEnumerable
+
 lazy from .control_flow import ControlFlowEnumerable, ControlFlow
 
 lazy from .type_enumerable import TypeEnumerable
@@ -19,6 +21,7 @@ class TakeEnumerable[T](
     FilterEnumerable[T],
     TypeEnumerable[T],
     ControlFlowEnumerable[T],
+    CopyEnumerable[T]
 ):
     def first(self, predicate: FilterPredicate[T] | None = None) -> T:
         if predicate is not None:
@@ -56,6 +59,16 @@ class TakeEnumerable[T](
         return self.control_flow(
             lambda x: ControlFlow[T].ok(x) if predicate(x) else ControlFlow.stop()
         )
+
+    def peek_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
+        return self.shallow_copy().take_while(predicate)
+
+    def peek(self) -> T:
+        return self.peek_n(1).single()
+    
+    def peek_n(self, n: int) -> "Enumerable[T]":
+        return self.shallow_copy().enumerate().take_while(lambda x: x[0] < n).map(lambda x: x[1])
+
 
 
 class TakeEnumerableExceptionCase(StrEnum):
