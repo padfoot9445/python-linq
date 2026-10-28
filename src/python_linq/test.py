@@ -37,7 +37,8 @@ def test_filter_is_correct():
 
 def test_select_enumerable_returns_correct():
     assert Enumerable(range(5)).select(lambda x: x**2).to_list() == [0, 1, 4, 9, 16]
-
+def test_flat_map_enumerable_returns_correct():
+    assert Enumerable(range(5)).flat_map(lambda x: (1, x)).to_list() == [1, 0, 1, 1, 1, 2, 1,3,1,4]
 
 def test_first_returns_correct():
     assert Enumerable([1, 2, 3]).first() == 1
