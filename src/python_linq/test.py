@@ -147,3 +147,9 @@ def test_control_flow():
         )
     ).to_list() == [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     assert next(j) == 22
+
+def test_skip_while_and_take_while():
+    assert Enumerable(range(10000000000)).skip_while(lambda x: x < 5).take_while(lambda x: x < 10).to_list() == [5,6,7,8,9]
+
+def test_skip_and_take():
+    assert Enumerable(range(100000000)).skip(10).take(10).to_list() == [10,11,12,13,14,15,16,17,18,19]

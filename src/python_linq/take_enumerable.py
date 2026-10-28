@@ -1,12 +1,23 @@
 lazy from enum import StrEnum
-lazy from typing import Any
+lazy from typing import Any, Callable
+
+lazy from .control_flow import ControlFlowEnumerable, ControlFlow
+
+lazy from .type_enumerable import TypeEnumerable
+
+lazy from .select_enumerable import SelectEnumerable
 
 lazy from .filter_enumerable import FilterEnumerable, FilterPredicate
 
 lazy from .count_enumerable import CountEnumerable
+lazy from .enumerable import Enumerable
 
 
-class TakeEnumerable[T](CountEnumerable[T], FilterEnumerable[T]):
+
+
+class TakeEnumerable[T](
+    SelectEnumerable[T], CountEnumerable[T], FilterEnumerable[T], TypeEnumerable[T], ControlFlowEnumerable[T]
+):
     def first(self, predicate: FilterPredicate[T] | None = None) -> T:
         if predicate is not None:
             return self.filter(predicate).first()
@@ -27,6 +38,18 @@ class TakeEnumerable[T](CountEnumerable[T], FilterEnumerable[T]):
         if count != 0:
             raise TakeEnumerableException.too_many_items(1, count)
         return first
+
+    def skip(self, n: int = 1) -> "Enumerable[T]":
+        return self.enumerate().skip_while(lambda x: x[0] < n).map(lambda x: x[1])
+
+    def skip_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
+        return self.control_flow(lambda x: ControlFlow.skip() if predicate(x) else ControlFlow[T].ok(x))
+
+    def take(self, n: int = 1) -> "Enumerable[T]":
+        return self.enumerate().take_while(lambda x: x[0] < n).map(lambda x: x[1])
+
+    def take_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
+        return self.control_flow(lambda x: ControlFlow[T].ok(x) if predicate(x) else ControlFlow.stop())
 
 
 class TakeEnumerableExceptionCase(StrEnum):
