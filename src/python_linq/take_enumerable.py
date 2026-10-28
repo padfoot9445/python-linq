@@ -21,7 +21,7 @@ class TakeEnumerable[T](
     FilterEnumerable[T],
     TypeEnumerable[T],
     ControlFlowEnumerable[T],
-    CopyEnumerable[T]
+    CopyEnumerable[T],
 ):
     def first(self, predicate: FilterPredicate[T] | None = None) -> T:
         if predicate is not None:
@@ -65,10 +65,14 @@ class TakeEnumerable[T](
 
     def peek(self) -> T:
         return self.peek_n(1).single()
-    
-    def peek_n(self, n: int) -> "Enumerable[T]":
-        return self.shallow_copy().enumerate().take_while(lambda x: x[0] < n).map(lambda x: x[1])
 
+    def peek_n(self, n: int) -> "Enumerable[T]":
+        return (
+            self.shallow_copy()
+            .enumerate()
+            .take_while(lambda x: x[0] < n)
+            .map(lambda x: x[1])
+        )
 
 
 class TakeEnumerableExceptionCase(StrEnum):
