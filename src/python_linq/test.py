@@ -1,8 +1,9 @@
-from typing import Iterable
+from typing import Iterable, cast
 
 lazy from .take_enumerable import TakeEnumerableException, TakeEnumerableExceptionCase
 
-lazy from .enumerable import Enumerable
+from . import *
+
 import pytest
 
 
@@ -134,3 +135,15 @@ def test_fold_returns_expected():
 
 def test_join_returns_expected():
     assert Enumerable(["a", "b", "c"]).join("d") == "adbdc"
+
+
+def test_control_flow():
+    j = (i for i in range(10000))
+    assert Enumerable(j).control_flow(
+        lambda x: (
+            ControlFlow.skip()
+            if x <= 10
+            else (ControlFlow[int].ok(x) if x <= 20 else ControlFlow.stop())
+        )
+    ).to_list() == [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    assert next(j) == 22
