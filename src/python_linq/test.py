@@ -168,3 +168,17 @@ def test_skip_and_take():
         18,
         19,
     ]
+
+def test_no_copy():
+    j = (i for i in range(10))
+    x1 = Enumerable(j)
+    x2 = x1
+    assert x1.to_list() == list(range(10))
+    assert x2.to_list() == []
+
+def test_copy():
+    j = (i for i in range(10))
+    x1 = Enumerable(j)
+    x2 = x1.shallow_copy()
+    assert x1.to_list() == list(range(10))
+    assert x2.to_list() == list(range(10))
