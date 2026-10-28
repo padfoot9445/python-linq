@@ -1,4 +1,4 @@
-lazy from typing import Callable, Collection, Iterable
+lazy from typing import Any, Callable, Collection, Iterable
 
 lazy from .enumerable import Enumerable
 
@@ -17,3 +17,6 @@ class SelectEnumerable[T](BaseEnumerable[T]):
             for result_bundle in self.map(callback):
                 yield from result_bundle
         return Enumerable(inner())
+
+    def tee(self, callback: Callable[[T], Any]) -> "Enumerable[T]":
+        return self.select(lambda x: (callback(x), x)).select(lambda x: x[1])
