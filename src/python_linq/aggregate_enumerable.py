@@ -48,6 +48,8 @@ class AggregateEnumerable[T](TakeEnumerable[T]):
             if seed is sentinel:
                 acc = self.first()
                 yield cast(V, acc)
+            else:
+                yield cast(V, seed)
 
             for i in self:
                 acc = aggregator(cast(V, acc), i)
