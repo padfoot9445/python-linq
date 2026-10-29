@@ -55,7 +55,6 @@ class TakeEnumerable[T](
             return self.filter(predicate).single(default=default)
 
         first = self.first(default=default)
-        first = self.first(default=default)
         count = self.count()
         if count != 0:
             raise TakeEnumerableException.too_many_items(1, count + 1)
