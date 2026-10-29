@@ -19,15 +19,21 @@ lazy from .count_enumerable import CountEnumerable
 lazy from .enumerable import Enumerable
 
 sentinel = object()
+
+
 class TakeEnumerable[T](
     CountEnumerable[T],
     FilterEnumerable[T],
     TypeEnumerable[T],
     ControlFlowEnumerable[T],
     CopyEnumerable[T],
-    WholeSequenceOperationsEnumerable[T]
+    WholeSequenceOperationsEnumerable[T],
 ):
-    def first(self, predicate: FilterPredicate[T] | None = None, default: T | object = sentinel) -> T:
+    def first(
+        self,
+        predicate: FilterPredicate[T] | None = None,
+        default: T | object = sentinel,
+    ) -> T:
         if predicate is not None:
             return self.filter(predicate).first(default=default)
         try:
@@ -39,7 +45,11 @@ class TakeEnumerable[T](
                 1, 0
             ) from e  # we know there must be 0 as if next fails the iterator must be empty
 
-    def single(self, predicate: FilterPredicate[T] | None = None, default: T | object = sentinel) -> T:
+    def single(
+        self,
+        predicate: FilterPredicate[T] | None = None,
+        default: T | object = sentinel,
+    ) -> T:
 
         if predicate is not None:
             return self.filter(predicate).single(default=default)
@@ -51,20 +61,26 @@ class TakeEnumerable[T](
             raise TakeEnumerableException.too_many_items(1, count + 1)
         return first
 
-    def last(self, predicate: FilterPredicate[T] | None = None, default: T  | object = sentinel) -> T:
+    def last(
+        self,
+        predicate: FilterPredicate[T] | None = None,
+        default: T | object = sentinel,
+    ) -> T:
         if predicate is not None:
-                return self.filter(predicate).last(default=default)
+            return self.filter(predicate).last(default=default)
         last = default
         for i in self:
             last = i
         if last is sentinel:
-            raise TakeEnumerableException.not_enough_items(
-                1, 0
-            )
+            raise TakeEnumerableException.not_enough_items(1, 0)
         else:
-            return cast(T, last) # safety: last can only be object where object !: T when last is sentinel
+            return cast(
+                T, last
+            )  # safety: last can only be object where object !: T when last is sentinel
 
-    def islice(self, start: int | None, stop: int | None, step: int | None=1) -> "Enumerable[T]":
+    def islice(
+        self, start: int | None, stop: int | None, step: int | None = 1
+    ) -> "Enumerable[T]":
         slice = itertools.islice(self, start, stop, step)
         return Enumerable(slice)
 
@@ -73,7 +89,11 @@ class TakeEnumerable[T](
 
     def skip_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
         return self.control_flow(
-            lambda x: ControlFlow.skip() if predicate(x) else ControlFlow[T].yield_control_ok(x)
+            lambda x: (
+                ControlFlow.skip()
+                if predicate(x)
+                else ControlFlow[T].yield_control_ok(x)
+            )
         )
 
     def take(self, n: int = 1) -> "Enumerable[T]":
@@ -86,11 +106,19 @@ class TakeEnumerable[T](
 
     def take_while_inclusive(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
         return self.control_flow(
-            lambda x: ControlFlow[T].ok(x) if predicate(x) else ControlFlow[T].stop_ok(x)
+            lambda x: (
+                ControlFlow[T].ok(x) if predicate(x) else ControlFlow[T].stop_ok(x)
+            )
         )
 
     def take_while_lossless(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
-        last_index = self.shallow_copy().enumerate().take_while_lossy(lambda x: predicate(x[1])).map(lambda x: x[0]).last(default=-1)
+        last_index = (
+            self.shallow_copy()
+            .enumerate()
+            .take_while_lossy(lambda x: predicate(x[1]))
+            .map(lambda x: x[0])
+            .last(default=-1)
+        )
         return self.take(last_index + 1)
 
     def peek_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":

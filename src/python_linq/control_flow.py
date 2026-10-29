@@ -41,13 +41,24 @@ class ControlFlow[T]:
         return cls(val=return_value, state=ControlFlowEnum.StopOk)
 
     @classmethod
-    def yield_control_ok(cls: Type[ControlFlow[T]], return_value: T) -> "ControlFlow[T]":
-        return cls(val=return_value, state=ControlFlowEnum.YieldControl, nested_state=ControlFlowEnum.Ok)
+    def yield_control_ok(
+        cls: Type[ControlFlow[T]], return_value: T
+    ) -> "ControlFlow[T]":
+        return cls(
+            val=return_value,
+            state=ControlFlowEnum.YieldControl,
+            nested_state=ControlFlowEnum.Ok,
+        )
 
-    
     @classmethod
-    def yield_control_skip(cls: Type[ControlFlow[T]], return_value: T) -> "ControlFlow[T]":
-        return cls(val=return_value, state=ControlFlowEnum.YieldControl, nested_state=ControlFlowEnum.Skip)
+    def yield_control_skip(
+        cls: Type[ControlFlow[T]], return_value: T
+    ) -> "ControlFlow[T]":
+        return cls(
+            val=return_value,
+            state=ControlFlowEnum.YieldControl,
+            nested_state=ControlFlowEnum.Skip,
+        )
 
 
 class ControlFlowEnumerable[T](BaseEnumerable[T]):
@@ -65,10 +76,16 @@ class ControlFlowEnumerable[T](BaseEnumerable[T]):
                     case ControlFlow(state=ControlFlowEnum.StopOk):
                         yield val.val
                         break
-                    case ControlFlow(state=ControlFlowEnum.YieldControl, nested_state=ControlFlowEnum.Ok):
+                    case ControlFlow(
+                        state=ControlFlowEnum.YieldControl,
+                        nested_state=ControlFlowEnum.Ok,
+                    ):
                         yield val.val
                         yield from self
-                    case ControlFlow(state=ControlFlowEnum.YieldControl, nested_state=ControlFlowEnum.Skip):
+                    case ControlFlow(
+                        state=ControlFlowEnum.YieldControl,
+                        nested_state=ControlFlowEnum.Skip,
+                    ):
                         yield from self.control_flow(lambda _: ControlFlow.skip())
                     case _:
                         raise Exception("func did not return ControlFlow object!")
