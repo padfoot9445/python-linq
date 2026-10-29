@@ -31,7 +31,7 @@ class TakeEnumerable[T](
     ControlFlowEnumerable[T],
     CopyEnumerable[T],
     WholeSequenceOperationsEnumerable[T],
-    CollectEnumerable[T]
+    CollectEnumerable[T],
 ):
     def first(
         self,
@@ -151,10 +151,13 @@ class TakeEnumerable[T](
             .take_while_lossy(lambda x: x[0] < n)
             .map(lambda x: x[1])
         )
+
     def skip_last(self, n: int = 1) -> "Enumerable[T]":
         return self.reverse().skip(n).reverse()
+
     def reverse(self) -> "Enumerable[T]":
         return Enumerable(reversed(self.to_list()))
+
 
 class TakeEnumerableExceptionCase(StrEnum):
     NotEnoughItems = (

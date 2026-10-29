@@ -1,4 +1,4 @@
-lazy from typing import Any, Callable, Collection, Iterable
+lazy from typing import Any, Callable, Iterable
 
 lazy from .enumerable import Enumerable
 

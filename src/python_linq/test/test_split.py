@@ -1,6 +1,5 @@
 import itertools
 
-import pytest
 
 from .. import *
 

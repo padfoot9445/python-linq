@@ -1,6 +1,5 @@
 lazy from .copy_enumerable import CopyEnumerable
 
-lazy from .base_enumerable import BaseEnumerable
 lazy from .enumerable import Enumerable
 
 

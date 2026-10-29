@@ -19,19 +19,30 @@ class AggregateEnumerable[T](TakeEnumerable[T]):
         self, aggregator: Callable[[V, T], V], seed: V | object = sentinel
     ) -> V:
         return self._scan(aggregator, seed).reverse().take(1).single()
+
     def join(
-        self, sep: T, aggregator: Callable[[T, T], T] = (lambda x, y: x + y)
-    ) -> T:  # pyright: ignore[reportUnknownLambdaType, reportOperatorIssue]
+        self,
+        sep: T,
+        aggregator: Callable[[T, T], T] = (
+            lambda x, y: x + y  # pyright: ignore[reportUnknownLambdaType, reportOperatorIssue]
+        ), 
+    ) -> T:
         return self.fold(lambda x, y: aggregator(x, aggregator(sep, y)))
+
     @overload
     def scan[V](self, aggregator: Callable[[V, T], V], seed: V) -> "Enumerable[V]": ...
     @overload
     def scan(self, aggregator: Callable[[T, T], T]) -> "Enumerable[T]": ...
     @overload
     def scan(self, aggregator: Callable[[T, T], T], seed: T) -> "Enumerable[T]": ...
-    def scan[V](self, aggregator: Callable[[V, T], V], seed: V | object = sentinel) -> "Enumerable[V]":
+    def scan[V](
+        self, aggregator: Callable[[V, T], V], seed: V | object = sentinel
+    ) -> "Enumerable[V]":
         return self._scan(aggregator, seed)
-    def _scan[V](self, aggregator: Callable[[V, T], V], seed: V | object = sentinel) -> "Enumerable[V]":
+
+    def _scan[V](
+        self, aggregator: Callable[[V, T], V], seed: V | object = sentinel
+    ) -> "Enumerable[V]":
         def inner():
             acc = seed
             if seed is sentinel:
@@ -43,4 +54,3 @@ class AggregateEnumerable[T](TakeEnumerable[T]):
                 yield acc
 
         return Enumerable(inner())
-    
