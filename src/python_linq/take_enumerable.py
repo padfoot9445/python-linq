@@ -122,7 +122,6 @@ class TakeEnumerable[T](
 
     def peek_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
         return self.shallow_copy().take_while_lossy(predicate)
-        return self.shallow_copy().take_while_lossy(predicate)
 
     def peek(self) -> T:
         return self.peek_n(1).single()

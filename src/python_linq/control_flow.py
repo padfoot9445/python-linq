@@ -60,7 +60,6 @@ class ControlFlow[T]:
             nested_state=ControlFlowEnum.Skip,
         )
 
-
 class ControlFlowEnumerable[T](BaseEnumerable[T]):
     def control_flow(self, func: Callable[[T], ControlFlow[T]]) -> "Enumerable[T]":
         def inner() -> Iterable[T]:
