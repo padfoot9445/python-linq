@@ -15,6 +15,11 @@ class PartitionEnumerable[T](TakeEnumerable[T]):
     def split_multiple(self, sep: Iterable[T] | object = sentinel) -> "Enumerable[Enumerable[T]]":
         if sep is sentinel:
             return self._split_no_separator()
+        
+        sep = list(cast(Iterable[T], sep))
+        
+        if len(sep) == 0:
+            return self._split_no_separator()
         else:
             return self._split(cast(Iterable[T], sep)) # safety: a random object instance should not be passed into sep unless object is a permissible value for T to take
     
@@ -24,17 +29,13 @@ class PartitionEnumerable[T](TakeEnumerable[T]):
     def _split(self, sep: Iterable[T]) -> Enumerable[Enumerable[T]]:
         sep = list(sep)
         def inner():
-            while True:
-                segment = self.take_while_lossless(lambda _: self.peek_n(len(sep)).neq(Enumerable(sep)))
-                if segment.is_empty():
-                    # No more non-separator elements - check if we should yield an empty segment after separator
-                    has_separator = self.peek_n(len(sep)).eq(Enumerable(sep))
-                    if has_separator:
-                        self.skip(len(sep))  # consume the separator
-                        continue  # will yield empty segment in next iteration
-                    else:
-                        break  # EOF or no more separators - we're done
-                yield segment
+            buffer: list[T] = []
+            for item in self:
+                buffer.append(item)
+                if len(buffer) >= len(sep) and buffer[-len(sep):] == sep:
+                    yield Enumerable(buffer[:-len(sep)])
+                    buffer = []
+            yield Enumerable(buffer)
 
         return Enumerable(inner())
 

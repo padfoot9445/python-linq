@@ -22,9 +22,8 @@ class TestSplit:
         assert segments == [[1], [2], [3]]
 
     def test_split_empty(self):
-        result = Enumerable[int]([]).split(0)
-        count = result.count()
-        assert count == 0
+        result = Enumerable[int]([]).split(0).map(list)
+        assert result.single() == []
 
     def test_split_separator_at_end(self):
         segments = list(Enumerable([1, 2, 0]).split(0))
@@ -50,8 +49,8 @@ class TestSplitMultiple:
         assert segments[2].to_list() == [2]
 
     def test_split_multiple_empty_input(self):
-        result = Enumerable[int]([]).split_multiple([0])
-        assert result.is_empty()
+        result = Enumerable[int]([]).split_multiple([0]).map(list)
+        assert result.single() == []
 
 
 class TestSplitStreaming:
@@ -84,9 +83,12 @@ class TestSplitStreaming:
         Enumerable(source()).split(0)
         assert consumed == []
 
-    def test_empty_separator_rejected_eagerly(self):
-        with pytest.raises(ValueError):
-            Enumerable([1, 2, 3]).split_multiple([])
+    def test_empty_separator_returns_correct(self):
+        assert Enumerable([1, 2, 3]).split_multiple([]).map(list).to_list() == [
+            [1],
+            [2],
+            [3],
+        ]
 
     def test_overlapping_separator_is_non_overlapping(self):
         # mirrors "aaa".split("aa") == ["", "a"]
