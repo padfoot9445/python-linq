@@ -10,8 +10,7 @@ lazy from .collect_enumerable import CollectEnumerable
 lazy from .take_enumerable import TakeEnumerable
 
 
-class Enumerable[T](
-    CollectEnumerable[T], AggregateEnumerable[T], WholeSequenceOperationsEnumerable[T]
+class Enumerable[T](AggregateEnumerable[T], WholeSequenceOperationsEnumerable[T]
 ):
     def __getitem__(self, _: Type[T]):
         return Enumerable
