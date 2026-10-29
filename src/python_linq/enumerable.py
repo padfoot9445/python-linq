@@ -9,8 +9,12 @@ from python_linq.select_enumerable import SelectEnumerable
 lazy from .collect_enumerable import CollectEnumerable
 lazy from .take_enumerable import TakeEnumerable
 
+lazy from .count_enumerable import CountEnumerable
 
-class Enumerable[T](AggregateEnumerable[T], WholeSequenceOperationsEnumerable[T]
+lazy from .partition_enumerable import PartitionEnumerable
+
+
+class Enumerable[T](AggregateEnumerable[T],PartitionEnumerable[T],  WholeSequenceOperationsEnumerable[T], 
 ):
     def __getitem__(self, _: Type[T]):
         return Enumerable
