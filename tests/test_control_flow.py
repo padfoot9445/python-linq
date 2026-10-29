@@ -37,6 +37,7 @@ class TestControlFlow:
 
         assert Enumerable(range(5)).control_flow(control).to_list() == [0, 10, 2, 3, 4]
         assert seen == [0, 1]
+        print("RAN")
 
     def test_yield_control_skip_consumes_remainder(self):
         source = iter(range(5))

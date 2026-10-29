@@ -52,10 +52,9 @@ class ControlFlow[T]:
 
     @classmethod
     def yield_control_skip(
-        cls: Type[ControlFlow[T]], return_value: T
-    ) -> "ControlFlow[T]":
+        cls: Type[ControlFlow[T]], _: T) -> "ControlFlow[T]":
         return cls(
-            val=return_value,
+            val=None,
             state=ControlFlowEnum.YieldControl,
             nested_state=ControlFlowEnum.Skip,
         )
@@ -86,6 +85,7 @@ class ControlFlowEnumerable[T](BaseEnumerable[T]):
                         state=ControlFlowEnum.YieldControl,
                         nested_state=ControlFlowEnum.Skip,
                     ):
+                        assert val.nested_state is not None
                         yield from self.control_flow(lambda _: ControlFlow.skip())
                     case _:
                         raise Exception("func did not return ControlFlow object!")

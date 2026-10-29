@@ -107,6 +107,7 @@ class TakeEnumerable[T](
         )
 
     def take(self, n: int = 1) -> "Enumerable[T]":
+        assert isinstance(n, int)
         return self.islice(None, n)
 
     def take_while_lossy(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
