@@ -48,7 +48,7 @@ class TakeEnumerable[T](
         first = self.first(default=default)
         count = self.count()
         if count != 0:
-            raise TakeEnumerableException.too_many_items(1, count)
+            raise TakeEnumerableException.too_many_items(1, count + 1)
         return first
 
     def last(self, predicate: FilterPredicate[T] | None = None, default: T  | object = sentinel) -> T:
@@ -73,7 +73,7 @@ class TakeEnumerable[T](
 
     def skip_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
         return self.control_flow(
-            lambda x: ControlFlow.skip() if predicate(x) else ControlFlow[T].ok(x)
+            lambda x: ControlFlow.skip() if predicate(x) else ControlFlow[T].yield_control_ok(x)
         )
 
     def take(self, n: int = 1) -> "Enumerable[T]":
