@@ -1,0 +1,290 @@
+Binary files orig/src/.mypy_cache/3.15/cache.0.db and new/src/.mypy_cache/3.15/cache.0.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.1.db and new/src/.mypy_cache/3.15/cache.1.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.10.db and new/src/.mypy_cache/3.15/cache.10.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.11.db and new/src/.mypy_cache/3.15/cache.11.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.12.db and new/src/.mypy_cache/3.15/cache.12.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.13.db and new/src/.mypy_cache/3.15/cache.13.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.14.db and new/src/.mypy_cache/3.15/cache.14.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.2.db and new/src/.mypy_cache/3.15/cache.2.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.3.db and new/src/.mypy_cache/3.15/cache.3.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.4.db and new/src/.mypy_cache/3.15/cache.4.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.5.db and new/src/.mypy_cache/3.15/cache.5.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.6.db and new/src/.mypy_cache/3.15/cache.6.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.7.db and new/src/.mypy_cache/3.15/cache.7.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.8.db and new/src/.mypy_cache/3.15/cache.8.db differ
+Binary files orig/src/.mypy_cache/3.15/cache.9.db and new/src/.mypy_cache/3.15/cache.9.db differ
+diff -ruN '--exclude=__pycache__' orig/src/python_linq/base_enumerable.py new/src/python_linq/base_enumerable.py
+--- orig/src/python_linq/base_enumerable.py	2026-10-29 04:12:02.965984455 +0000
++++ new/src/python_linq/base_enumerable.py	2026-10-29 04:12:03.118318774 +0000
+@@ -2,7 +2,7 @@
+ 
+ 
+ class BaseEnumerable[T]:
+-    def __init__(self, val: Iterable[T]):
++    def __init__(self, val: Iterable[T] = ()):
+         self.value = iter(val)
+ 
+     def __iter__(self):
+diff -ruN '--exclude=__pycache__' orig/src/python_linq/partition_enumerable.py new/src/python_linq/partition_enumerable.py
+--- orig/src/python_linq/partition_enumerable.py	2026-10-29 04:12:02.965867639 +0000
++++ new/src/python_linq/partition_enumerable.py	2026-10-29 04:12:03.117997751 +0000
+@@ -1,4 +1,4 @@
+-from typing import Iterable, cast
++from typing import Iterable, Iterator, cast
+ 
+ lazy from .take_enumerable import TakeEnumerable
+ 
+@@ -22,35 +22,32 @@
+         return self.map(lambda x: Enumerable([x]))
+     
+     def _split(self, sep: Iterable[T]) -> "Enumerable[Enumerable[T]]":
+-        """Split the sequence at separator values using declarative pipeline style."""
+-        
++        """Lazily split at each non-overlapping occurrence of the sequence `sep`.
++
++        Follows `str.split` semantics: a trailing separator produces a trailing
++        empty segment, and an empty input produces no segments at all.
++
++        A segment is emitted as soon as its terminating separator has been read
++        (or the source ends), so only the current segment is buffered and the
++        source may be infinite.
++        """
+         sep_list = list(sep)
+-        
+-        def segments_generator():
+-            # Collect all elements first for declarative processing
+-            all_elements = list(self.to_list())
+-            
+-            i = 0
+-            while i < len(all_elements):
+-                # Check if current position is at a separator
+-                n_sep = len(sep_list)
+-                look_ahead = all_elements[i:i+n_sep] if i + n_sep <= len(all_elements) else []
+-                
+-                if look_ahead == sep_list:
+-                    # Found separator - yield empty segment and advance past it
+-                    yield Enumerable()  # Empty enumerable for segment at separator position
+-                    i += n_sep
+-                else:
+-                    # Not at separator, collect elements until next separator or EOF
+-                    start = i
+-                    while i < len(all_elements):
+-                        look_ahead_check = all_elements[i:i+n_sep] if i + n_sep <= len(all_elements) else []
+-                        if look_ahead_check == sep_list:
+-                            break
+-                        i += 1
+-                    
+-                    # Yield collected segment (may be empty if only separator present)
+-                    yield Enumerable(all_elements[start:i])
+-        
+-        return Enumerable(segments_generator())
++        if not sep_list:
++            # Validate eagerly: a bad argument should fail at the call site,
++            # not on first iteration.
++            raise ValueError("separator must not be empty")
++        n = len(sep_list)
++
++        def segments() -> Iterator["Enumerable[T]"]:
++            segment: list[T] = []
++            seen_any = False
++            for item in self:
++                seen_any = True
++                segment.append(item)
++                if segment[-n:] == sep_list:
++                    yield Enumerable(segment[:-n])
++                    segment = []
++            if seen_any:
++                yield Enumerable(segment)
+ 
++        return Enumerable(segments())
+diff -ruN '--exclude=__pycache__' orig/src/python_linq/take_enumerable.py new/src/python_linq/take_enumerable.py
+--- orig/src/python_linq/take_enumerable.py	2026-10-29 04:12:02.965952665 +0000
++++ new/src/python_linq/take_enumerable.py	2026-10-29 04:12:27.494329043 +0000
+@@ -78,14 +78,17 @@
+             )  # safety: last can only be object where object !: T when last is sentinel
+ 
+     def exact(self, n: int, default: T | object = sentinel) -> "Enumerable[T]":
+-        cache = self.to_list()
+-
+-        if default is not sentinel and len(cache) < n:
+-            return Enumerable(cache + [cast(T, default)] * (n - len(cache)))
++        # Read at most n + 1 items: enough to tell "too many" without
++        # draining (or hanging on) a huge or infinite source.
++        cache = list(itertools.islice(self, n + 1))
+ 
+         if len(cache) > n:
+-            raise TakeEnumerableException.too_many_items(n, len(cache))
+-        elif len(cache) < n:
++            # we stopped early, so the true length is unknown (> n)
++            raise TakeEnumerableException.too_many_items(n, None)
++
++        if len(cache) < n:
++            if default is not sentinel:
++                return Enumerable(cache + [cast(T, default)] * (n - len(cache)))
+             raise TakeEnumerableException.not_enough_items(n, len(cache))
+         return Enumerable(cache)
+ 
+@@ -182,5 +185,5 @@
+     def too_many_items(cls, at_most: int | None = None, actual: int | None = None):
+         return cls(
+             TakeEnumerableExceptionCase.TooManyItems,
+-            f"Expected at most {at_most if at_most is not None else "unknown(not provided)"} items but got only {actual if actual is not None else "unknown(not provided)"} items",
++            f"Expected at most {at_most if at_most is not None else "unknown(not provided)"} items but got {actual if actual is not None else "unknown(not provided)"} items",
+         )
+diff -ruN '--exclude=__pycache__' orig/src/python_linq/test/test_eq.py new/src/python_linq/test/test_eq.py
+--- orig/src/python_linq/test/test_eq.py	2026-10-29 04:12:02.967183742 +0000
++++ new/src/python_linq/test/test_eq.py	2026-10-29 04:12:27.495342234 +0000
+@@ -5,3 +5,21 @@
+     def test_eq(self):
+         assert not Enumerable(range(10)).eq(Enumerable(range(11)))
+         assert Enumerable(range(10)).eq(Enumerable(range(10)))
++
++    def test_eq_longer_self_is_not_equal(self):
++        assert not Enumerable([1, 2, 3]).eq(Enumerable([1, 2]))
++        assert not Enumerable([1, 2]).eq(Enumerable([1, 2, 3]))
++
++    def test_eq_empty(self):
++        assert Enumerable[int]([]).eq(Enumerable[int]([]))
++        assert not Enumerable([1]).eq(Enumerable[int]([]))
++        assert not Enumerable[int]([]).eq(Enumerable([1]))
++
++    def test_eq_accepts_any_iterable(self):
++        assert Enumerable([1, 2, 3]).eq([1, 2, 3])
++
++    def test_eq_with_comparer(self):
++        assert Enumerable([1, 2]).eq(["1", "2"], comparer=lambda a, b: str(a) == b)
++
++    def test_neq_longer_self(self):
++        assert Enumerable([1, 2, 3]).neq(Enumerable([1, 2]))
+diff -ruN '--exclude=__pycache__' orig/src/python_linq/test/test_single.py new/src/python_linq/test/test_single.py
+--- orig/src/python_linq/test/test_single.py	2026-10-29 04:12:02.966523132 +0000
++++ new/src/python_linq/test/test_single.py	2026-10-29 04:12:27.494812086 +0000
+@@ -1,3 +1,4 @@
++import itertools
+ from .. import *
+ import pytest
+ from ..take_enumerable import TakeEnumerableException, TakeEnumerableExceptionCase
+@@ -20,10 +21,12 @@
+             Enumerable([1, 2]).single()
+         assert exc.value.exception_case == TakeEnumerableExceptionCase.TooManyItems
+ 
+-    def test_too_many_reports_actual_total(self):
++    def test_too_many_does_not_drain_source(self):
++        # single() must stop after seeing a second item, so it cannot report the
++        # true total -- and must terminate on an infinite source.
+         with pytest.raises(TakeEnumerableException) as exc:
+-            Enumerable([1, 2, 3]).single()
+-        assert "3" in str(exc.value)
++            Enumerable(itertools.count()).single()
++        assert exc.value.exception_case == TakeEnumerableExceptionCase.TooManyItems
+ 
+     def test_predicate_matching_multiple_raises(self):
+         with pytest.raises(TakeEnumerableException) as exc:
+diff -ruN '--exclude=__pycache__' orig/src/python_linq/test/test_split.py new/src/python_linq/test/test_split.py
+--- orig/src/python_linq/test/test_split.py	2026-10-29 04:12:02.967240947 +0000
++++ new/src/python_linq/test/test_split.py	2026-10-29 04:12:27.495119621 +0000
+@@ -1,3 +1,7 @@
++import itertools
++
++import pytest
++
+ from .. import *
+ 
+ 
+@@ -26,7 +30,7 @@
+         segments = list(Enumerable([1, 2, 0]).split(0))
+         assert len(segments) == 2
+         assert segments[0].to_list() == [1, 2]
+-        assert segments[0].is_empty()
++        assert segments[1].is_empty()
+ 
+ 
+ class TestSplitMultiple:
+@@ -48,3 +52,52 @@
+     def test_split_multiple_empty_input(self):
+         result = Enumerable[int]([]).split_multiple([0])
+         assert result.is_empty()
++
++
++class TestSplitStreaming:
++    def test_infinite_source_yields_segments(self):
++        source = itertools.cycle([1, 2, 0])
++        assert Enumerable(source).split(0).take(3).map(list).to_list() == [[1, 2]] * 3
++
++    def test_segment_emitted_as_soon_as_separator_is_read(self):
++        consumed: list[int] = []
++
++        def source():
++            for x in [1, 2, 0, 3, 4, 0, 5]:
++                consumed.append(x)
++                yield x
++
++        segments = iter(Enumerable(source()).split(0))
++        assert next(segments).to_list() == [1, 2]
++        assert consumed == [1, 2, 0]  # nothing read past the separator
++        assert next(segments).to_list() == [3, 4]
++        assert consumed == [1, 2, 0, 3, 4, 0]
++
++    def test_nothing_consumed_until_iterated(self):
++        consumed: list[int] = []
++
++        def source():
++            for x in [1, 0, 2]:
++                consumed.append(x)
++                yield x
++
++        Enumerable(source()).split(0)
++        assert consumed == []
++
++    def test_empty_separator_rejected_eagerly(self):
++        with pytest.raises(ValueError):
++            Enumerable([1, 2, 3]).split_multiple([])
++
++    def test_overlapping_separator_is_non_overlapping(self):
++        # mirrors "aaa".split("aa") == ["", "a"]
++        assert Enumerable([1, 1, 1]).split_multiple([1, 1]).map(list).to_list() == [
++            [],
++            [1],
++        ]
++
++    def test_partial_match_prefix_is_kept(self):
++        result = Enumerable([1, 2, 1, 2, 3, 9]).split_multiple([1, 2, 3])
++        assert result.map(list).to_list() == [[1, 2], [9]]
++
++    def test_only_separator_gives_two_empty_segments(self):
++        assert Enumerable([0]).split(0).map(list).to_list() == [[], []]
+diff -ruN '--exclude=__pycache__' orig/src/python_linq/whole_sequence_operations_enumerable.py new/src/python_linq/whole_sequence_operations_enumerable.py
+--- orig/src/python_linq/whole_sequence_operations_enumerable.py	2026-10-29 04:12:02.965606256 +0000
++++ new/src/python_linq/whole_sequence_operations_enumerable.py	2026-10-29 04:12:03.118188944 +0000
+@@ -1,4 +1,5 @@
+-from typing import Callable, Iterable
++import itertools
++from typing import Callable, Iterable, cast
+ 
+ lazy from .select_enumerable import SelectEnumerable
+ lazy from .enumerable import Enumerable
+@@ -18,14 +19,20 @@
+ 
+     def eq[TOther](
+         self,
+-        other: "Enumerable[TOther]",
++        other: Iterable[TOther],
+         comparer: Callable[[T, TOther], bool] = (lambda x, y: x == y),
+     ) -> bool:
+-        return not self.neq(other, comparer=comparer)
++        missing = object()
++        for a, b in itertools.zip_longest(self, other, fillvalue=missing):
++            if a is missing or b is missing:
++                return False  # one side ran out first
++            if not comparer(cast(T, a), cast(TOther, b)):
++                return False
++        return True
+ 
+     def neq[TOther](
+         self,
+-        other: "Enumerable[TOther]",
++        other: Iterable[TOther],
+         comparer: Callable[[T, TOther], bool] = (lambda x, y: x == y),
+     ) -> bool:
+-        return self.zip(other).any(lambda x: not comparer(*x)) or other.count() > 0
++        return not self.eq(other, comparer=comparer)

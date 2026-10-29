@@ -2,6 +2,7 @@ from typing import Callable, cast, overload
 
 
 lazy from .take_enumerable import TakeEnumerable
+lazy from .enumerable import Enumerable
 
 sentinel = object()
 
@@ -17,20 +18,29 @@ class AggregateEnumerable[T](TakeEnumerable[T]):
     def fold[V](
         self, aggregator: Callable[[V, T], V], seed: V | object = sentinel
     ) -> V:
-        acc = seed
-        if seed is sentinel:
-            # assert isinstance(seed, T)
-            acc = self.first()
-
-        acc = cast(
-            V, acc
-        )  # safety: it is up to the caller (and type-checker, provided by the overloads above) to make sure that if T and V differ, seed is provided.
-
-        for i in self:
-            acc = aggregator(acc, i)
-        return acc
-
+        return self._scan(aggregator, seed).reverse().take(1).single()
     def join(
         self, sep: T, aggregator: Callable[[T, T], T] = (lambda x, y: x + y)
     ) -> T:  # pyright: ignore[reportUnknownLambdaType, reportOperatorIssue]
         return self.fold(lambda x, y: aggregator(x, aggregator(sep, y)))
+    @overload
+    def scan[V](self, aggregator: Callable[[V, T], V], seed: V) -> "Enumerable[V]": ...
+    @overload
+    def scan(self, aggregator: Callable[[T, T], T]) -> "Enumerable[T]": ...
+    @overload
+    def scan(self, aggregator: Callable[[T, T], T], seed: T) -> "Enumerable[T]": ...
+    def scan[V](self, aggregator: Callable[[V, T], V], seed: V | object = sentinel) -> "Enumerable[V]":
+        return self._scan(aggregator, seed)
+    def _scan[V](self, aggregator: Callable[[V, T], V], seed: V | object = sentinel) -> "Enumerable[V]":
+        def inner():
+            acc = seed
+            if seed is sentinel:
+                acc = self.first()
+                yield cast(V, acc)
+
+            for i in self:
+                acc = aggregator(cast(V, acc), i)
+                yield acc
+
+        return Enumerable(inner())
+    
