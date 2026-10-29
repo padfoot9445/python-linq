@@ -58,11 +58,7 @@ class TakeEnumerable[T](
         if predicate is not None:
             return self.filter(predicate).single(default=default)
 
-        first = self.first(default=default)
-        count = self.count()
-        if count != 0:
-            raise TakeEnumerableException.too_many_items(1, count + 1)
-        return first
+        return self.exact(1, default=default).first()
 
     def last(
         self,
@@ -80,6 +76,18 @@ class TakeEnumerable[T](
             return cast(
                 T, last
             )  # safety: last can only be object where object !: T when last is sentinel
+
+    def exact(self, n: int, default: T | object = sentinel) -> "Enumerable[T]":
+        cache = self.to_list()
+
+        if default is not sentinel and len(cache) < n:
+            return Enumerable(cache + [cast(T, default)] * (n - len(cache)))
+
+        if len(cache) > n:
+            raise TakeEnumerableException.too_many_items(n, len(cache))
+        elif len(cache) < n:
+            raise TakeEnumerableException.not_enough_items(n, len(cache))
+        return Enumerable(cache)
 
     def islice(
         self, start: int | None, stop: int | None, step: int | None = 1
