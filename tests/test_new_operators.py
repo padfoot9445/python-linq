@@ -1,6 +1,6 @@
 import pytest
 
-from python_linq import Enumerable
+from python_linq import DROP, Enumerable
 
 
 def test_composition_is_lazy_and_preserves_order():
@@ -10,9 +10,9 @@ def test_composition_is_lazy_and_preserves_order():
     assert Enumerable([1]).chain([2, 3]).to_list() == [1, 2, 3]
 
 
-def test_filter_map_discards_none_and_flatten_flattens_one_level():
+def test_filter_map_discards_drop_sentinel_and_flatten_flattens_one_level():
     assert Enumerable([0, 1, 2]).filter_map(
-        lambda value: str(value) if value else None
+        lambda value: str(value) if value else DROP
     ).to_list() == ["1", "2"]
     assert Enumerable([[1, 2], [], [3]]).flatten().to_list() == [1, 2, 3]
 

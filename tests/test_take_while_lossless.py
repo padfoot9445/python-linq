@@ -1,3 +1,5 @@
+import itertools
+
 from python_linq import *
 
 
@@ -24,3 +26,15 @@ class TestTakeWhileLossless:
         enumerable = Enumerable(iter([1, 2, 3, 4, 5]))
         assert enumerable.take_while_lossless(lambda x: x < 3).to_list() == [1, 2]
         assert enumerable.to_list() == [3, 4, 5]
+
+    def test_yields_incrementally_for_an_infinite_matching_source(self):
+        enumerable = Enumerable(itertools.count())
+        seen: list[int] = []
+        result = enumerable.take_while_lossless(
+            lambda value: seen.append(value) or value < 10
+        )
+
+        assert seen == []
+        assert result.take(3).to_list() == [0, 1, 2]
+        assert seen == [0, 1, 2]
+        assert enumerable.first() == 3

@@ -24,14 +24,14 @@ class PartitionEnumerable[T](TakeEnumerable[T]):
         if sep is sentinel:
             return self._split_no_separator()
 
-        sep = list(cast(Iterable[T], sep))
+        def inner() -> Iterator[Enumerable[T]]:
+            separators = list(cast(Iterable[T], sep))
+            if not separators:
+                yield from self._split_no_separator()
+            else:
+                yield from self._split(separators)
 
-        if len(sep) == 0:
-            return self._split_no_separator()
-        else:
-            return self._split(
-                cast(Iterable[T], sep)
-            )  # safety: a random object instance should not be passed into sep unless object is a permissible value for T to take
+        return Enumerable(inner())
 
     def _split_no_separator(self) -> "Enumerable[Enumerable[T]]":
         return self.map(lambda x: Enumerable([x]))

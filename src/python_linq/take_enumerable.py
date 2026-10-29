@@ -2,7 +2,7 @@ lazy from enum import StrEnum
 import itertools
 import builtins
 lazy from typing import Any, Callable, cast
-from collections.abc import Hashable, Iterable, Iterator
+from collections.abc import Iterable, Iterator
 from statistics import fmean
 from typing import overload
 
@@ -25,6 +25,7 @@ lazy from .filter_enumerable import FilterEnumerable, FilterPredicate
 lazy from .count_enumerable import CountEnumerable
 lazy from .enumerable import Enumerable
 lazy from ._sentinels import MISSING
+lazy from .parity_enumerable import IteratorParityEnumerable
 
 
 class TakeEnumerable[T](
@@ -35,6 +36,7 @@ class TakeEnumerable[T](
     CopyEnumerable[T],
     WholeSequenceOperationsEnumerable[T],
     CollectEnumerable[T],
+    IteratorParityEnumerable[T],
 ):
     @overload
     def first(self, predicate: FilterPredicate[T] | None = None) -> T: ...
@@ -180,15 +182,80 @@ class TakeEnumerable[T](
 
         return Enumerable(inner())
 
-    def group_by[K: Hashable](
+    @overload
+    def group_by[K](
         self, key_selector: Callable[[T], K]
-    ) -> "Enumerable[tuple[K, list[T]]]":
-        def inner() -> Iterator[tuple[K, list[T]]]:
-            groups: dict[K, list[T]] = {}
+    ) -> "Enumerable[tuple[K, list[T]]]": ...
+
+    @overload
+    def group_by[K](
+        self,
+        key_selector: Callable[[T], K],
+        *,
+        comparer: Callable[[K, K], bool] | None = None,
+    ) -> "Enumerable[tuple[K, list[T]]]": ...
+
+    @overload
+    def group_by[K, R](
+        self,
+        key_selector: Callable[[T], K],
+        *,
+        result_selector: Callable[[K, list[T]], R],
+        comparer: Callable[[K, K], bool] | None = None,
+    ) -> "Enumerable[R]": ...
+
+    @overload
+    def group_by[K, V](
+        self,
+        key_selector: Callable[[T], K],
+        element_selector: Callable[[T], V],
+        *,
+        comparer: Callable[[K, K], bool] | None = None,
+    ) -> "Enumerable[tuple[K, list[V]]]": ...
+
+    @overload
+    def group_by[K, V, R](
+        self,
+        key_selector: Callable[[T], K],
+        element_selector: Callable[[T], V],
+        result_selector: Callable[[K, list[V]], R],
+        *,
+        comparer: Callable[[K, K], bool] | None = None,
+    ) -> "Enumerable[R]": ...
+
+    def group_by[K, V, R](
+        self,
+        key_selector: Callable[[T], K],
+        element_selector: Callable[[T], V] | None = None,
+        result_selector: Callable[[K, list[V]], R] | None = None,
+        *,
+        comparer: Callable[[K, K], bool] | None = None,
+    ) -> "Enumerable[Any]":
+        def inner() -> Iterator[Any]:
+            groups: list[tuple[K, list[V]]] = []
             for item in self:
                 key = key_selector(item)
-                groups.setdefault(key, []).append(item)
-            yield from groups.items()
+                element = (
+                    element_selector(item)
+                    if element_selector is not None
+                    else cast(V, item)
+                )
+                for existing_key, elements in groups:
+                    same = (
+                        comparer(key, existing_key)
+                        if comparer is not None
+                        else key == existing_key
+                    )
+                    if same:
+                        elements.append(element)
+                        break
+                else:
+                    groups.append((key, [element]))
+            for key, elements in groups:
+                if result_selector is None:
+                    yield key, elements
+                else:
+                    yield result_selector(key, elements)
 
         return Enumerable(inner())
 
@@ -205,7 +272,11 @@ class TakeEnumerable[T](
             else:
                 yield from builtins.sorted(self, key=key, reverse=reverse)
 
-        return Enumerable(inner())
+        result = Enumerable(inner())
+        setattr(result, "_ordered_source", self)
+        ordered_key: Callable[[T], Any] = key if key is not None else lambda item: item
+        setattr(result, "_ordering_keys", ((ordered_key, reverse),))
+        return result
 
     @overload
     def default_if_empty(self) -> "Enumerable[T | None]": ...
@@ -224,11 +295,25 @@ class TakeEnumerable[T](
 
         return Enumerable(inner())
 
-    def sum(self) -> T:
-        return cast(T, builtins.sum(cast(Iterable[Any], self)))
+    @overload
+    def sum(self) -> T: ...
 
-    def average(self) -> float:
-        return fmean(self)  # type: ignore[arg-type]
+    @overload
+    def sum[V](self, selector: Callable[[T], V]) -> V: ...
+
+    def sum(self, selector: Callable[[T], Any] | None = None) -> Any:
+        values = self if selector is None else map(selector, self)
+        return builtins.sum(cast(Iterable[Any], values))
+
+    @overload
+    def average(self) -> float: ...
+
+    @overload
+    def average(self, selector: Callable[[T], Any]) -> float: ...
+
+    def average(self, selector: Callable[[T], Any] | None = None) -> float:
+        values = self if selector is None else map(selector, self)
+        return fmean(values)  # type: ignore[arg-type]
 
     def min(self, *, key: Callable[[T], Any] | None = None) -> T:
         if key is None:
@@ -258,6 +343,15 @@ class TakeEnumerable[T](
             )
         )
 
+    def skip_while_indexed(
+        self, predicate: Callable[[T, int], bool]
+    ) -> "Enumerable[T]":
+        return (
+            self.enumerate()
+            .skip_while(lambda indexed: predicate(indexed[1], indexed[0]))
+            .map(lambda indexed: indexed[1])
+        )
+
     def take(self, n: int = 1) -> "Enumerable[T]":
         assert isinstance(n, int)
         return self.islice(None, n)
@@ -270,6 +364,15 @@ class TakeEnumerable[T](
     def take_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
         return self.take_while_lossy(predicate)
 
+    def take_while_indexed(
+        self, predicate: Callable[[T, int], bool]
+    ) -> "Enumerable[T]":
+        return (
+            self.enumerate()
+            .take_while_lossy(lambda indexed: predicate(indexed[1], indexed[0]))
+            .map(lambda indexed: indexed[1])
+        )
+
     def take_while_inclusive(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
         return self.control_flow(
             lambda x: (
@@ -281,12 +384,11 @@ class TakeEnumerable[T](
         lookahead = self.shallow_copy()
 
         def inner() -> Iterator[T]:
-            count = 0
             for item in lookahead:
                 if not predicate(item):
                     break
-                count += 1
-            yield from itertools.islice(self, count)
+                next(iter(self))
+                yield item
 
         return Enumerable(inner())
 

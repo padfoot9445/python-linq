@@ -23,11 +23,17 @@ class ControlFlowEnum(Enum):
     YieldControl = auto()
 
 
+class ControlFlowNestedState(Enum):
+    NoNestedState = auto()
+    Ok = auto()
+    Skip = auto()
+
+
 @dataclass
 class ControlFlow[T]:
     val: T | _NoValue
     state: ControlFlowEnum
-    nested_state: ControlFlowEnum | None = None
+    nested_state: ControlFlowNestedState = ControlFlowNestedState.NoNestedState
 
     def __getitem__(self, _: type[T]) -> type["ControlFlow[Any]"]:
         return ControlFlow
@@ -53,7 +59,7 @@ class ControlFlow[T]:
         return cls(
             val=return_value,
             state=ControlFlowEnum.YieldControl,
-            nested_state=ControlFlowEnum.Ok,
+            nested_state=ControlFlowNestedState.Ok,
         )
 
     @classmethod
@@ -61,7 +67,7 @@ class ControlFlow[T]:
         return cls(
             val=_NO_VALUE,
             state=ControlFlowEnum.YieldControl,
-            nested_state=ControlFlowEnum.Skip,
+            nested_state=ControlFlowNestedState.Skip,
         )
 
 
@@ -82,15 +88,14 @@ class ControlFlowEnumerable[T](BaseEnumerable[T]):
                         break
                     case ControlFlow(
                         state=ControlFlowEnum.YieldControl,
-                        nested_state=ControlFlowEnum.Ok,
+                        nested_state=ControlFlowNestedState.Ok,
                     ):
                         yield _require_value(val)
                         yield from self
                     case ControlFlow(
                         state=ControlFlowEnum.YieldControl,
-                        nested_state=ControlFlowEnum.Skip,
+                        nested_state=ControlFlowNestedState.Skip,
                     ):
-                        assert val.nested_state is not None
                         yield from self.control_flow(lambda _: ControlFlow.skip())
                     case _:
                         raise Exception("func did not return ControlFlow object!")

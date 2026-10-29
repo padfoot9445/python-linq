@@ -1,5 +1,5 @@
 from operator import add
-from typing import Callable, cast, overload
+from typing import Any, Callable, cast, overload
 from collections.abc import Iterator
 
 
@@ -10,6 +10,31 @@ sentinel = object()
 
 
 class AggregateEnumerable[T](TakeEnumerable[T]):
+
+    @overload
+    def aggregate(self, seed: Callable[[T, T], T]) -> T: ...
+
+    @overload
+    def aggregate[V](self, seed: V, aggregator: Callable[[V, T], V]) -> V: ...
+
+    @overload
+    def aggregate[V, R](
+        self,
+        seed: V,
+        aggregator: Callable[[V, T], V],
+        result_selector: Callable[[V], R],
+    ) -> R: ...
+
+    def aggregate(
+        self,
+        seed: object,
+        aggregator: Callable[[Any, T], Any] | None = None,
+        result_selector: Callable[[Any], Any] | None = None,
+    ) -> Any:
+        if aggregator is None:
+            return self.fold(cast(Callable[[T, T], T], seed))
+        result = self.fold(aggregator, seed)
+        return result_selector(result) if result_selector is not None else result
 
     @overload
     def fold[V](self, aggregator: Callable[[V, T], V], seed: V) -> V: ...

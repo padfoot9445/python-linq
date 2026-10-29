@@ -72,3 +72,23 @@ def test_exact_defers_validation_until_iteration():
         result.to_list()
     assert exc.value.exception_case is TakeEnumerableExceptionCase.TooManyItems
     assert consumed == [0, 1, 2]
+
+
+def test_split_multiple_defers_materializing_the_separator():
+    consumed: list[int] = []
+    separator_consumed: list[int] = []
+
+    def separator():
+        separator_consumed.append(2)
+        yield 2
+
+    result = Enumerable(tracked_source(consumed)).split_multiple(separator())
+
+    assert consumed == []
+    assert separator_consumed == []
+    assert result.map(lambda segment: segment.to_list()).to_list() == [
+        [0, 1],
+        [3],
+    ]
+    assert consumed == [0, 1, 2, 3]
+    assert separator_consumed == [2]
