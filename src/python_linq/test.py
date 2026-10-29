@@ -151,9 +151,9 @@ class TestControlFlow:
 
 class TestSkipWhileAndTakeWhile:
     def test_skip_while_and_take_while(self):
-        assert Enumerable(range(10000000000)).skip_while(lambda x: x < 5).take_while(
-            lambda x: x < 10
-        ).to_list() == [5, 6, 7, 8, 9]
+        assert Enumerable(range(10000000000)).skip_while(
+            lambda x: x < 5
+        ).take_while_lossy(lambda x: x < 10).to_list() == [5, 6, 7, 8, 9]
 
 
 class TestSkipAndTake:
@@ -166,6 +166,11 @@ class TestSkipAndTake:
         enumerable = Enumerable(range(10))
         enumerable.take(3).to_list()
         assert enumerable.first() == 3
+
+    def test_skip_exhausts_correctly(self):
+        enumerable = Enumerable(range(10))
+
+        assert enumerable.skip(3).first() == 3
 
 
 class TestCopy:

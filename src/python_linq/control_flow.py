@@ -11,6 +11,7 @@ class ControlFlowEnum(Enum):
     Ok = auto()
     Skip = auto()
     Stop = auto()
+    StopOk = auto()
 
 
 @dataclass
@@ -33,6 +34,10 @@ class ControlFlow[T]:
     def stop(cls: Type[ControlFlow[Any]]) -> "ControlFlow[Any]":
         return cls(val=None, state=ControlFlowEnum.Stop)
 
+    @classmethod
+    def stop_ok(cls: Type[ControlFlow[T]], return_value: T) -> "ControlFlow[T]":
+        return cls(val=return_value, state=ControlFlowEnum.StopOk)
+
 
 class ControlFlowEnumerable[T](BaseEnumerable[T]):
     def control_flow(self, func: Callable[[T], ControlFlow[T]]) -> "Enumerable[T]":
@@ -45,6 +50,9 @@ class ControlFlowEnumerable[T](BaseEnumerable[T]):
                     case ControlFlow(state=ControlFlowEnum.Skip):
                         continue
                     case ControlFlow(state=ControlFlowEnum.Stop):
+                        break
+                    case ControlFlow(state=ControlFlowEnum.StopOk):
+                        yield val.val
                         break
                     case _:
                         raise Exception("func did not return ControlFlow object!")
