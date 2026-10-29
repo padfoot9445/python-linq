@@ -12,7 +12,7 @@ class ControlFlowEnum(Enum):
     Skip = auto()
     Stop = auto()
     StopOk = auto()
-    YieldControl = None
+    YieldControl = auto()
 
 
 @dataclass

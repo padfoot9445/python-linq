@@ -1,6 +1,6 @@
 lazy from enum import StrEnum
 import itertools
-lazy from typing import Any, Callable, Iterable, cast
+lazy from typing import Any, Callable, cast
 
 from rustshed import Null, Option, Some
 
@@ -12,7 +12,6 @@ lazy from .control_flow import ControlFlowEnumerable, ControlFlow
 
 lazy from .type_enumerable import TypeEnumerable
 
-lazy from .select_enumerable import SelectEnumerable
 
 lazy from .filter_enumerable import FilterEnumerable, FilterPredicate
 
@@ -45,6 +44,7 @@ class TakeEnumerable[T](
         if predicate is not None:
             return self.filter(predicate).single(default=default)
 
+        first = self.first(default=default)
         first = self.first(default=default)
         count = self.count()
         if count != 0:
@@ -94,6 +94,7 @@ class TakeEnumerable[T](
         return self.take(last_index + 1)
 
     def peek_while(self, predicate: Callable[[T], bool]) -> "Enumerable[T]":
+        return self.shallow_copy().take_while_lossy(predicate)
         return self.shallow_copy().take_while_lossy(predicate)
 
     def peek(self) -> T:
