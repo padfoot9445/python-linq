@@ -1,4 +1,6 @@
+from operator import add
 from typing import Callable, cast, overload
+from collections.abc import Iterator
 
 
 lazy from .take_enumerable import TakeEnumerable
@@ -20,12 +22,13 @@ class AggregateEnumerable[T](TakeEnumerable[T]):
     ) -> V:
         return self._scan(aggregator, seed).reverse().take(1).single()
 
+    def reduce(self, aggregator: Callable[[T, T], T]) -> T:
+        return self.fold(aggregator)
+
     def join(
         self,
         sep: T,
-        aggregator: Callable[[T, T], T] = (
-            lambda x, y: x + y  # pyright: ignore[reportUnknownLambdaType, reportOperatorIssue]
-        ), 
+        aggregator: Callable[[T, T], T] = cast(Callable[[T, T], T], add),
     ) -> T:
         return self.fold(lambda x, y: aggregator(x, aggregator(sep, y)))
 
@@ -43,7 +46,7 @@ class AggregateEnumerable[T](TakeEnumerable[T]):
     def _scan[V](
         self, aggregator: Callable[[V, T], V], seed: V | object = sentinel
     ) -> "Enumerable[V]":
-        def inner():
+        def inner() -> Iterator[V]:
             acc = seed
             if seed is sentinel:
                 acc = self.first()

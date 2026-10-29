@@ -1,5 +1,5 @@
 import itertools
-from typing import Callable, Iterable, cast
+from typing import Callable, Iterable, cast, overload
 
 lazy from .select_enumerable import SelectEnumerable
 lazy from .enumerable import Enumerable
@@ -14,8 +14,20 @@ class WholeSequenceOperationsEnumerable[T](SelectEnumerable[T]):
     def all(self, predicate: Callable[[T], bool]) -> bool:
         return all(self.map(predicate))
 
-    def any(self, predicate: Callable[[T], bool]) -> bool:
-        return any(self.map(predicate))
+    @overload
+    def any(self) -> bool: ...
+
+    @overload
+    def any(self, predicate: Callable[[T], bool]) -> bool: ...
+
+    def any(self, predicate: Callable[[T], bool] | None = None) -> bool:
+        if predicate is None:
+            try:
+                next(iter(self))
+            except StopIteration:
+                return False
+            return True
+        return any(predicate(item) for item in self)
 
     def eq[TOther](
         self,
@@ -36,3 +48,10 @@ class WholeSequenceOperationsEnumerable[T](SelectEnumerable[T]):
         comparer: Callable[[T, TOther], bool] = (lambda x, y: x == y),
     ) -> bool:
         return not self.eq(other, comparer=comparer)
+
+    def sequence_equal[TOther](
+        self,
+        other: Iterable[TOther],
+        comparer: Callable[[T, TOther], bool] = (lambda x, y: x == y),
+    ) -> bool:
+        return self.eq(other, comparer=comparer)

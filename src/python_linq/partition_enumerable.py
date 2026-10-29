@@ -1,4 +1,5 @@
-from typing import Iterable, cast
+from collections.abc import Iterable, Iterator
+from typing import cast
 
 lazy from .take_enumerable import TakeEnumerable
 
@@ -38,7 +39,7 @@ class PartitionEnumerable[T](TakeEnumerable[T]):
     def _split(self, sep: Iterable[T]) -> Enumerable[Enumerable[T]]:
         sep = list(sep)
 
-        def inner():
+        def inner() -> Iterator[Enumerable[T]]:
             buffer: list[T] = []
             for item in self:
                 buffer.append(item)

@@ -1,10 +1,18 @@
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Callable, Iterable, Type
+from collections.abc import Callable, Iterable
+from typing import Any, cast
 
 lazy from .enumerable import Enumerable
 
 lazy from .base_enumerable import BaseEnumerable
+
+
+class _NoValue:
+    __slots__ = ()
+
+
+_NO_VALUE = _NoValue()
 
 
 class ControlFlowEnum(Enum):
@@ -17,33 +25,31 @@ class ControlFlowEnum(Enum):
 
 @dataclass
 class ControlFlow[T]:
-    val: T
+    val: T | _NoValue
     state: ControlFlowEnum
     nested_state: ControlFlowEnum | None = None
 
-    def __getitem__(self, _: Type[T]):
+    def __getitem__(self, _: type[T]) -> type["ControlFlow[Any]"]:
         return ControlFlow
 
     @classmethod
-    def ok(cls: Type[ControlFlow[T]], return_value: T) -> "ControlFlow[T]":
+    def ok(cls, return_value: T) -> "ControlFlow[T]":
         return cls(val=return_value, state=ControlFlowEnum.Ok)
 
     @classmethod
-    def skip(cls: Type[ControlFlow[Any]]) -> "ControlFlow[Any]":
-        return cls(val=None, state=ControlFlowEnum.Skip)
+    def skip(cls) -> "ControlFlow[Any]":
+        return cls(val=_NO_VALUE, state=ControlFlowEnum.Skip)
 
     @classmethod
-    def stop(cls: Type[ControlFlow[Any]]) -> "ControlFlow[Any]":
-        return cls(val=None, state=ControlFlowEnum.Stop)
+    def stop(cls) -> "ControlFlow[Any]":
+        return cls(val=_NO_VALUE, state=ControlFlowEnum.Stop)
 
     @classmethod
-    def stop_ok(cls: Type[ControlFlow[T]], return_value: T) -> "ControlFlow[T]":
+    def stop_ok(cls, return_value: T) -> "ControlFlow[T]":
         return cls(val=return_value, state=ControlFlowEnum.StopOk)
 
     @classmethod
-    def yield_control_ok(
-        cls: Type[ControlFlow[T]], return_value: T
-    ) -> "ControlFlow[T]":
+    def yield_control_ok(cls, return_value: T) -> "ControlFlow[T]":
         return cls(
             val=return_value,
             state=ControlFlowEnum.YieldControl,
@@ -51,10 +57,9 @@ class ControlFlow[T]:
         )
 
     @classmethod
-    def yield_control_skip(
-        cls: Type[ControlFlow[T]], _: T) -> "ControlFlow[T]":
+    def yield_control_skip(cls, _: T) -> "ControlFlow[T]":
         return cls(
-            val=None,
+            val=_NO_VALUE,
             state=ControlFlowEnum.YieldControl,
             nested_state=ControlFlowEnum.Skip,
         )
@@ -67,19 +72,19 @@ class ControlFlowEnumerable[T](BaseEnumerable[T]):
                 val = func(i)
                 match val:
                     case ControlFlow(state=ControlFlowEnum.Ok):
-                        yield val.val
+                        yield _require_value(val)
                     case ControlFlow(state=ControlFlowEnum.Skip):
                         continue
                     case ControlFlow(state=ControlFlowEnum.Stop):
                         break
                     case ControlFlow(state=ControlFlowEnum.StopOk):
-                        yield val.val
+                        yield _require_value(val)
                         break
                     case ControlFlow(
                         state=ControlFlowEnum.YieldControl,
                         nested_state=ControlFlowEnum.Ok,
                     ):
-                        yield val.val
+                        yield _require_value(val)
                         yield from self
                     case ControlFlow(
                         state=ControlFlowEnum.YieldControl,
@@ -91,3 +96,9 @@ class ControlFlowEnumerable[T](BaseEnumerable[T]):
                         raise Exception("func did not return ControlFlow object!")
 
         return Enumerable(inner())
+
+
+def _require_value[T](flow: ControlFlow[T]) -> T:
+    if flow.val is _NO_VALUE:
+        raise ValueError(f"{flow.state.name} control flow requires a value")
+    return cast(T, flow.val)

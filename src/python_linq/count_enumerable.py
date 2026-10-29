@@ -1,6 +1,7 @@
 lazy from .copy_enumerable import CopyEnumerable
 
 lazy from .enumerable import Enumerable
+lazy from ._sentinels import MISSING
 
 
 class CountEnumerable[T](CopyEnumerable[T]):
@@ -11,5 +12,4 @@ class CountEnumerable[T](CopyEnumerable[T]):
         return Enumerable(enumerate(self))
 
     def is_empty(self) -> bool:
-        sentinel = object()
-        return self.shallow_copy().first(default=sentinel) is sentinel
+        return next(iter(self.shallow_copy()), MISSING) is MISSING
