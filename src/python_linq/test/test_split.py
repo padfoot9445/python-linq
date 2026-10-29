@@ -1,3 +1,7 @@
+import itertools
+
+import pytest
+
 from .. import *
 
 
@@ -26,7 +30,7 @@ class TestSplit:
         segments = list(Enumerable([1, 2, 0]).split(0))
         assert len(segments) == 2
         assert segments[0].to_list() == [1, 2]
-        assert segments[0].is_empty()
+        assert segments[1].is_empty()
 
 
 class TestSplitMultiple:
@@ -48,3 +52,52 @@ class TestSplitMultiple:
     def test_split_multiple_empty_input(self):
         result = Enumerable[int]([]).split_multiple([0])
         assert result.is_empty()
+
+
+class TestSplitStreaming:
+    def test_infinite_source_yields_segments(self):
+        source = itertools.cycle([1, 2, 0])
+        assert Enumerable(source).split(0).take(3).map(list).to_list() == [[1, 2]] * 3
+
+    def test_segment_emitted_as_soon_as_separator_is_read(self):
+        consumed: list[int] = []
+
+        def source():
+            for x in [1, 2, 0, 3, 4, 0, 5]:
+                consumed.append(x)
+                yield x
+
+        segments = iter(Enumerable(source()).split(0))
+        assert next(segments).to_list() == [1, 2]
+        assert consumed == [1, 2, 0]  # nothing read past the separator
+        assert next(segments).to_list() == [3, 4]
+        assert consumed == [1, 2, 0, 3, 4, 0]
+
+    def test_nothing_consumed_until_iterated(self):
+        consumed: list[int] = []
+
+        def source():
+            for x in [1, 0, 2]:
+                consumed.append(x)
+                yield x
+
+        Enumerable(source()).split(0)
+        assert consumed == []
+
+    def test_empty_separator_rejected_eagerly(self):
+        with pytest.raises(ValueError):
+            Enumerable([1, 2, 3]).split_multiple([])
+
+    def test_overlapping_separator_is_non_overlapping(self):
+        # mirrors "aaa".split("aa") == ["", "a"]
+        assert Enumerable([1, 1, 1]).split_multiple([1, 1]).map(list).to_list() == [
+            [],
+            [1],
+        ]
+
+    def test_partial_match_prefix_is_kept(self):
+        result = Enumerable([1, 2, 1, 2, 3, 9]).split_multiple([1, 2, 3])
+        assert result.map(list).to_list() == [[1, 2], [9]]
+
+    def test_only_separator_gives_two_empty_segments(self):
+        assert Enumerable([0]).split(0).map(list).to_list() == [[], []]

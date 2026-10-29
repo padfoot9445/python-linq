@@ -1,4 +1,5 @@
-from typing import Callable, Iterable
+import itertools
+from typing import Callable, Iterable, cast
 
 lazy from .select_enumerable import SelectEnumerable
 lazy from .enumerable import Enumerable
@@ -18,14 +19,20 @@ class WholeSequenceOperationsEnumerable[T](SelectEnumerable[T]):
 
     def eq[TOther](
         self,
-        other: "Enumerable[TOther]",
+        other: Iterable[TOther],
         comparer: Callable[[T, TOther], bool] = (lambda x, y: x == y),
     ) -> bool:
-        return not self.neq(other, comparer=comparer)
+        missing = object()
+        for a, b in itertools.zip_longest(self, other, fillvalue=missing):
+            if a is missing or b is missing:
+                return False  # one side ran out first
+            if not comparer(cast(T, a), cast(TOther, b)):
+                return False
+        return True
 
     def neq[TOther](
         self,
-        other: "Enumerable[TOther]",
+        other: Iterable[TOther],
         comparer: Callable[[T, TOther], bool] = (lambda x, y: x == y),
     ) -> bool:
-        return self.zip(other).any(lambda x: not comparer(*x)) or other.count() > 0
+        return not self.eq(other, comparer=comparer)

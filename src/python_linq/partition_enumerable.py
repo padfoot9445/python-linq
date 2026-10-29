@@ -1,4 +1,4 @@
-from typing import Iterable, cast
+from typing import Iterable, Iterator, cast
 
 lazy from .take_enumerable import TakeEnumerable
 
@@ -25,12 +25,16 @@ class PartitionEnumerable[T](TakeEnumerable[T]):
         sep = list(sep)
         def inner():
             while True:
-                if self.peek_n(len(sep)).eq(Enumerable(sep)):
-                    self.skip(len(sep))
-                next_segment = self.take_while_lossless(lambda _: self.peek_n(len(sep)).neq(Enumerable(sep)))
-                if next_segment.is_empty():
-                    break
-                yield next_segment
+                segment = self.take_while_lossless(lambda _: self.peek_n(len(sep)).neq(Enumerable(sep)))
+                if segment.is_empty():
+                    # No more non-separator elements - check if we should yield an empty segment after separator
+                    has_separator = self.peek_n(len(sep)).eq(Enumerable(sep))
+                    if has_separator:
+                        self.skip(len(sep))  # consume the separator
+                        continue  # will yield empty segment in next iteration
+                    else:
+                        break  # EOF or no more separators - we're done
+                yield segment
 
         return Enumerable(inner())
 

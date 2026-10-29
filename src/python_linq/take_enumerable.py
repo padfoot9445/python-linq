@@ -78,14 +78,13 @@ class TakeEnumerable[T](
             )  # safety: last can only be object where object !: T when last is sentinel
 
     def exact(self, n: int, default: T | object = sentinel) -> "Enumerable[T]":
-        cache = self.to_list()
-
-        if default is not sentinel and len(cache) < n:
-            return Enumerable(cache + [cast(T, default)] * (n - len(cache)))
+        cache = self.take(n + 1).to_list()
 
         if len(cache) > n:
-            raise TakeEnumerableException.too_many_items(n, len(cache))
+            raise TakeEnumerableException.too_many_items(n, None)
         elif len(cache) < n:
+            if default is not sentinel:
+                return Enumerable(cache + [cast(T, default)] * (n - len(cache)))
             raise TakeEnumerableException.not_enough_items(n, len(cache))
         return Enumerable(cache)
 
@@ -182,5 +181,5 @@ class TakeEnumerableException(Exception):
     def too_many_items(cls, at_most: int | None = None, actual: int | None = None):
         return cls(
             TakeEnumerableExceptionCase.TooManyItems,
-            f"Expected at most {at_most if at_most is not None else "unknown(not provided)"} items but got only {actual if actual is not None else "unknown(not provided)"} items",
+            f"Expected at most {at_most if at_most is not None else "unknown(not provided)"} items but got at least {actual if actual is not None else "unknown(not provided)"} items",
         )

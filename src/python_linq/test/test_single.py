@@ -1,3 +1,4 @@
+import itertools
 from .. import *
 import pytest
 from ..take_enumerable import TakeEnumerableException, TakeEnumerableExceptionCase
@@ -20,10 +21,10 @@ class TestSingle:
             Enumerable([1, 2]).single()
         assert exc.value.exception_case == TakeEnumerableExceptionCase.TooManyItems
 
-    def test_too_many_reports_actual_total(self):
+    def test_too_many_does_not_drain_source(self):
         with pytest.raises(TakeEnumerableException) as exc:
-            Enumerable([1, 2, 3]).single()
-        assert "3" in str(exc.value)
+            Enumerable(itertools.count()).single()
+        assert exc.value.exception_case == TakeEnumerableExceptionCase.TooManyItems
 
     def test_predicate_matching_multiple_raises(self):
         with pytest.raises(TakeEnumerableException) as exc:
