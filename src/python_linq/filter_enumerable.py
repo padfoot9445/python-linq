@@ -1,4 +1,4 @@
-lazy from typing import Callable
+lazy from typing import Callable, overload
 from collections.abc import Iterator
 
 lazy from .enumerable import Enumerable
@@ -25,9 +25,12 @@ class FilterEnumerable[T](BaseEnumerable[T]):
                     yield item
 
         return Enumerable(inner())
-
-    def contains(
-        self, value: T, comparer: Callable[[T, T], bool] | None = None
+    @overload
+    def contains(self, value: T) -> bool: ...
+    @overload
+    def contains[V](self, value: V, comparer: Callable[[T, V], bool]) -> bool: ...
+    def contains[V](
+        self, value: V, comparer: Callable[[T, V], bool] | None = None
     ) -> bool:
         if comparer is None:
             return any(item == value for item in self)
