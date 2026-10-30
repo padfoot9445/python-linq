@@ -4,7 +4,7 @@
 
 Requires Python 3.15 or newer.
 
-[API parity inventory](docs/API_PARITY.md) compares the public method families with .NET 10 LINQ-to-Objects and stable Rust `Iterator`, including deliberate adaptations and non-portable guarantees.
+[Complete API reference](docs/API.md) documents the public methods and their behavior with examples executed by pytest. The [API parity inventory](docs/API_PARITY.md) compares method families with .NET 10 LINQ-to-Objects and stable Rust `Iterator`, including deliberate adaptations and non-portable guarantees.
 
 ```python
 from python_linq import Enumerable

@@ -3,7 +3,7 @@ import itertools
 import pytest
 from rustshed import Null, Some
 
-from python_linq import DROP, Enumerable, Ordering
+from python_linq import DROP, Enumerable, Ordering, TakeEnumerableException
 
 
 def test_rust_adaptors_are_lazy_and_preserve_none():
@@ -224,6 +224,11 @@ def test_linq_collection_conversion_and_default_operators():
     assert Enumerable([]).single_or_default(default=None) is None
     assert Enumerable([1, 2, 3]).element_at(-1) == 3
     assert Enumerable([1, 2, 3]).element_at_or_default(10) is None
+    assert (
+        Enumerable([1, 2, 3]).element_at_or_default(-4, default="missing") == "missing"
+    )
+    with pytest.raises(TakeEnumerableException):
+        Enumerable([1, 2, 3]).element_at(-4)
     assert Enumerable([1, 2, 3]).long_count() == 3
     assert Enumerable([1, 2, 3]).sum(lambda item: item * 2) == 12
     assert Enumerable([1, 2, 3]).average(lambda item: item * 2) == 4.0

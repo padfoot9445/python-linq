@@ -37,3 +37,7 @@ extraPaths = ["src"]
 python_version = "3.15"
 strict = true
 files = ["src/python_linq", "tests/typing"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "docs"]
+addopts = ["--doctest-glob=API.md"]

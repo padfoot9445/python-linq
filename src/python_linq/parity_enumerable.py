@@ -852,7 +852,15 @@ class IteratorParityEnumerable[T](BaseEnumerable[T]):
 
     def element_at(self, index: int) -> T:
         if index < 0:
-            return cast("Enumerable[T]", self).take_last(-index).first()
+            items = cast("Enumerable[T]", self).to_list()
+            try:
+                return items[index]
+            except IndexError as error:
+                from .take_enumerable import TakeEnumerableException
+
+                raise TakeEnumerableException.not_enough_items(
+                    -index, len(items)
+                ) from error
         return cast("Enumerable[T]", self).nth(index)
 
     @overload
@@ -863,7 +871,8 @@ class IteratorParityEnumerable[T](BaseEnumerable[T]):
 
     def element_at_or_default(self, index: int, default: object = None) -> object:
         if index < 0:
-            return cast("Enumerable[T]", self).take_last(-index).first(default=default)
+            items = cast("Enumerable[T]", self).to_list()
+            return items[index] if -index <= len(items) else default
         return cast("Enumerable[T]", self).nth(index, default=default)
 
     def long_count(self) -> int:
