@@ -53,10 +53,12 @@ enumeration of a derived result is not guaranteed to replay it either.
 
 ### Single-pass copying
 
-`shallow_copy()` uses `itertools.tee` at the current cursor position. It updates
-the original enumerable to use one branch and returns an enumerable wrapping
-the other branch. Both can read the same remaining values independently, with
-buffered values retained until the slower branch catches up.
+`shallow_copy()` uses `itertools.tee` at the current cursor position. It directs
+the original enumerable to one branch and returns an enumerable wrapping the
+other branch. Both can read the same remaining values independently, with
+buffered values retained until the slower branch catches up. The original
+cursor object remains stable, so iterators and lazy adaptors already obtained
+from the enumerable continue to follow its branch after the copy.
 
 ```pycon
 >>> values = Enumerable([None, 2, 3])
@@ -473,7 +475,7 @@ True
 | `to_lookup(key_selector, element_selector=None)` | Eagerly build a dictionary from keys to lists; keys must be hashable. |
 | `cast(type=None)` | Static typing cast only; does not convert or validate runtime values. |
 | `identity(value)` | Return `value` unchanged. |
-| `try_get_non_enumerated_count()` | Return `Some(len(iterator))` only if the stored iterator implements exact `Sized`; otherwise `Null`. Does not consume. A normal list iterator may not expose this capability even when its original list has a known length. |
+| `try_get_non_enumerated_count()` | Return `Some(len(iterator))` only if the wrapped source iterator implements `Sized`; otherwise `Null`. Does not consume. A normal list iterator may not expose this capability even when its original list has a known length. |
 
 Custom equality comparers are supported by grouping and sequence set operations,
 but not by Python dict/set conversion methods. Duplicate dictionary keys are

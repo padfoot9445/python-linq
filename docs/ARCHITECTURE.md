@@ -33,8 +33,9 @@ Python 3.15 or newer.
 
 ## Source and iteration model
 
-`BaseEnumerable.__init__` calls `iter(source)` immediately and stores the
-resulting iterator as `.value`. Its `__iter__` returns that same iterator.
+`BaseEnumerable.__init__` calls `iter(source)` immediately and stores a stable
+cursor proxy as `.value`; the proxy delegates to the source iterator. Its
+`__iter__` returns that same proxy.
 Consequently, an instance is a cursor over one traversal, not a reusable
 description of a source:
 
@@ -48,10 +49,11 @@ description of a source:
 The implementation exposes cursor behavior directly in some methods. For
 example, `IteratorParityEnumerable.next()` advances `.value`, and
 `CopyEnumerable.shallow_copy()` uses `itertools.tee` to split the remaining
-cursor and replace `.value` with one tee branch. `by_ref()` returns the same
-object. These are distinct operations: `by_ref()` shares position, while
-`shallow_copy()` provides two independently advancing branches from the
-current position, with `tee` buffering as needed.
+cursor and redirect the stable proxy to one tee branch. Existing iterators and
+lazy adaptors using that proxy continue to follow the original branch.
+`by_ref()` returns the same enumerable object. These are distinct operations:
+`by_ref()` shares position, while `shallow_copy()` provides two independently
+advancing branches from the current position, with `tee` buffering as needed.
 
 There is no general source factory, replay cache, or capability protocol in the
 current architecture. A result does not automatically retain information that

@@ -879,8 +879,5 @@ class IteratorParityEnumerable[T](BaseEnumerable[T]):
         return cast("Enumerable[T]", self).count()
 
     def try_get_non_enumerated_count(self) -> Option[int]:
-        from collections.abc import Sized
-
-        if isinstance(self.value, Sized):
-            return Some(len(self.value))
-        return Null
+        count = self.value.non_enumerated_count()
+        return Some(count) if count is not None else Null
