@@ -52,6 +52,13 @@ def test_rust_terminals_and_comparisons_use_tagged_results():
     assert values.next_chunk(2).items == [2, 3]
     assert values.next_chunk(2).complete is False
     assert Enumerable([1, 2]).advance_by(3).remaining == 1
+    single = Enumerable([7])
+    assert single.next_chunk(1).items == [7]
+    assert single.next_chunk(1).complete is False
+    zero_advance = Enumerable([7])
+    assert zero_advance.advance_by(0).complete is True
+    assert zero_advance.advance_by(0).remaining == 0
+    assert zero_advance.next() == Some(7)
     assert Enumerable([1, 2]).position(lambda item: item == 2) == Some(1)
     assert Enumerable([1, 2, 1]).rposition(lambda item: item == 1) == Some(2)
     assert Enumerable([None]).min_by_key(lambda _: 0) == Some(None)
@@ -64,6 +71,11 @@ def test_rust_terminals_and_comparisons_use_tagged_results():
     assert Enumerable([1, 2]).cmp([1, 3]) is Ordering.Less
     assert Enumerable([1, 2]).cmp([1, 2]) is Ordering.Equal
     assert Enumerable([1, 3]).cmp([1, 2]) is Ordering.Greater
+    assert Enumerable([1, 2]).partial_cmp([1, 3]) == Some(Ordering.Less)
+    assert Enumerable([1, 2]).partial_cmp([1, 2]) == Some(Ordering.Equal)
+    assert Enumerable([1, 3]).partial_cmp([1, 2]) == Some(Ordering.Greater)
+    assert Enumerable([1]).partial_cmp([1, 2]) == Some(Ordering.Less)
+    assert Enumerable([1, 2]).partial_cmp([1]) == Some(Ordering.Greater)
     assert Enumerable([1, 2]).partial_cmp([1, None]) == Null
     assert Enumerable([1, 2]).eq_by([1, 2], lambda left, right: left == right)
     assert Enumerable([1, 2]).lt([1, 3])
@@ -72,6 +84,9 @@ def test_rust_terminals_and_comparisons_use_tagged_results():
     assert Enumerable([1, 3]).ge([1, 3])
     assert Enumerable([1, 2, 2]).is_sorted()
     assert not Enumerable([1, 3, 2]).is_sorted()
+    ascending_compare = lambda left, right: (left > right) - (left < right)
+    assert Enumerable([1, 2, 2]).is_sorted_by(ascending_compare)
+    assert not Enumerable([1, 3, 2]).is_sorted_by(ascending_compare)
     assert Enumerable([None, 1]).is_sorted_by_key(lambda item: 0 if item is None else 1)
 
 
@@ -115,6 +130,16 @@ def test_linq_set_operators_use_equality_and_preserve_order():
     assert Enumerable(["A", "a", "B"]).distinct_by(
         str.lower, comparer=lambda left, right: left == right
     ).to_list() == ["A", "B"]
+    case_insensitive = lambda left, right: left.lower() == right.lower()
+    assert Enumerable(["A", "b"]).union(
+        ["a", "B", "c"], comparer=case_insensitive
+    ).to_list() == ["A", "b", "c"]
+    assert Enumerable(["A", "b"]).except_(
+        ["a"], comparer=case_insensitive
+    ).to_list() == ["b"]
+    assert Enumerable(["A", "b"]).intersect(
+        ["a"], comparer=case_insensitive
+    ).to_list() == ["A"]
 
 
 def test_linq_count_aggregate_and_stable_secondary_ordering():

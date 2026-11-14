@@ -21,5 +21,16 @@ class TestEq:
     def test_eq_with_comparer(self):
         assert Enumerable([1, 2]).eq(["1", "2"], comparer=lambda a, b: str(a) == b)
 
+    def test_eq_length_mismatch_does_not_call_comparer_on_padding(self):
+        compared = []
+        comparer = lambda left, right: compared.append((left, right)) or True
+
+        assert not Enumerable([1]).eq([1, 2], comparer=comparer)
+        assert compared == [(1, 1)]
+
+        compared.clear()
+        assert not Enumerable([1, 2]).eq([1], comparer=comparer)
+        assert compared == [(1, 1)]
+
     def test_neq_longer_self(self):
         assert Enumerable([1, 2, 3]).neq(Enumerable([1, 2]))

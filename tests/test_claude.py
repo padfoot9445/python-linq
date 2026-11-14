@@ -534,6 +534,22 @@ class TestOrdering:
         )
         assert out == [("a", 2), ("a", 1), ("b", 1)]
 
+        class Row:
+            def __init__(self, group, rank):
+                self.group = group
+                self.rank = rank
+
+            def __lt__(self, other):
+                return self.group < other.group
+
+        rows = [Row("a", 2), Row("b", 0), Row("a", 1)]
+        out = E(rows).order_by().then_by(lambda row: row.rank).to_list()
+        assert [(row.group, row.rank) for row in out] == [
+            ("a", 1),
+            ("a", 2),
+            ("b", 0),
+        ]
+
     def test_then_by_requires_ordered_source(self):
         with pytest.raises(TypeError):
             E([1, 2]).then_by(lambda x: x)
@@ -667,6 +683,12 @@ class TestSelection:
             E([1]).element_at(5)
         assert E([1]).element_at_or_default(5) is None
         assert E([1]).element_at_or_default(5, "d") == "d"
+        e = E([10, 20, 30])
+        assert e.element_at(0) == 10
+        assert e.to_list() == [20, 30]
+        e = E([10, 20, 30])
+        assert e.element_at_or_default(0) == 10
+        assert e.to_list() == [20, 30]
 
     def test_find_is_first_with_predicate(self):
         assert E([1, 2, 3]).find(lambda n: n > 1) == 2
@@ -742,6 +764,10 @@ class TestAggregation:
         assert E([1, 2]).eq([1, 2]) is True
         assert E([1, 2]).eq([1]) is False
         assert E([1]).neq([2]) is True
+        compared = []
+        comparer = lambda left, right: compared.append((left, right)) or True
+        assert E([1]).eq([1, 2], comparer=comparer) is False
+        assert compared == [(1, 1)]
         assert E(["a"]).sequence_equal(
             ["A"], comparer=lambda x, y: x.lower() == y.lower()
         )
@@ -753,6 +779,9 @@ class TestAggregation:
         assert E([1, 3]).cmp([1, 2]) is Ordering.Greater
         assert E([1]).cmp([1, 0]) is Ordering.Less
         assert E([1, "a"]).partial_cmp([1, 2]) == Null
+        assert E([1, 2]).partial_cmp([1, 3]) == Some(Ordering.Less)
+        assert E([1, 2]).partial_cmp([1, 2]) == Some(Ordering.Equal)
+        assert E([1, 2]).partial_cmp([1]) == Some(Ordering.Greater)
         assert E([1, 2]).lt([1, 3]) and E([1, 2]).le([1, 2])
         assert E([2]).gt([1, 9]) and E([2]).ge([2])
         assert Ordering.Less == -1 and Ordering.Greater == 1 and Ordering.Equal == 0
@@ -763,6 +792,9 @@ class TestAggregation:
         assert E([]).is_sorted() is True
         assert E(["a", "bb"]).is_sorted_by_key(len) is True
         assert E([1, 2]).is_sorted_by(lambda a, b: None) is False
+        compare = lambda left, right: (left > right) - (left < right)
+        assert E([1, 2, 2]).is_sorted_by(compare) is True
+        assert E([1, 3, 2]).is_sorted_by(compare) is False
 
     def test_min_max_by_return_option(self):
         assert E([]).max_by_key(len) == Null
@@ -802,6 +834,9 @@ class TestRustStyle:
         e = E([1, 2, 3])
         assert e.next_chunk(2) == NextChunkResult(items=[1, 2], complete=True)
         assert e.next_chunk(2) == NextChunkResult(items=[3], complete=False)
+        single = E([7])
+        assert single.next_chunk(1) == NextChunkResult(items=[7], complete=True)
+        assert single.next_chunk(1) == NextChunkResult(items=[], complete=False)
         with pytest.raises(ValueError):
             E([1]).next_chunk(0)
 
@@ -809,6 +844,9 @@ class TestRustStyle:
         e = E([1, 2, 3])
         assert e.advance_by(2) == AdvanceByResult(complete=True, remaining=0)
         assert e.advance_by(5) == AdvanceByResult(complete=False, remaining=4)
+        untouched = E([1])
+        assert untouched.advance_by(0) == AdvanceByResult(complete=True, remaining=0)
+        assert untouched.next() == Some(1)
         with pytest.raises(ValueError):
             E([1]).advance_by(-1)
 

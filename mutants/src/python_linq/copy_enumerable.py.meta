@@ -1,0 +1,15 @@
+{
+    "exit_code_by_key": {
+        "python_linq.copy_enumerable.x\u01c1CopyEnumerable\u01c1shallow_copy__mutmut_1": 1
+    },
+    "hash_by_function_name": {
+        "x\u01c1CopyEnumerable\u01c1shallow_copy": "7873498ea249"
+    },
+    "type_check_error_by_key": {},
+    "durations_by_key": {
+        "python_linq.copy_enumerable.x\u01c1CopyEnumerable\u01c1shallow_copy__mutmut_1": 0.062698
+    },
+    "estimated_durations_by_key": {
+        "python_linq.copy_enumerable.x\u01c1CopyEnumerable\u01c1shallow_copy__mutmut_1": 0.0482123660040088
+    }
+}

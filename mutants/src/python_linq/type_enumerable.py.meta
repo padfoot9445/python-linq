@@ -1,0 +1,33 @@
+{
+    "exit_code_by_key": {
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_1": 0,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_2": 1,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_3": 1,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_4": 1,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_5": 0,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_6": 0,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_7": 0
+    },
+    "hash_by_function_name": {
+        "x\u01c1TypeEnumerable\u01c1cast": "5530c63e51ab"
+    },
+    "type_check_error_by_key": {},
+    "durations_by_key": {
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_1": 0.08583,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_2": 0.085548,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_3": 0.082877,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_4": 0.079919,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_5": 0.081924,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_6": 0.078178,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_7": 0.07512
+    },
+    "estimated_durations_by_key": {
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_1": 0.00041182600034517236,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_2": 0.00041182600034517236,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_3": 0.00041182600034517236,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_4": 0.00041182600034517236,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_5": 0.00041182600034517236,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_6": 0.00041182600034517236,
+        "python_linq.type_enumerable.x\u01c1TypeEnumerable\u01c1cast__mutmut_7": 0.00041182600034517236
+    }
+}

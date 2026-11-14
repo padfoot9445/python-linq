@@ -1,0 +1,39 @@
+{
+    "exit_code_by_key": {
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1__init____mutmut_1": 1,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1__next____mutmut_1": 1,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_1": 1,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_2": 1,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_3": 1,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_1": 1,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_2": 1,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_3": 1
+    },
+    "hash_by_function_name": {
+        "x\u01c1_Cursor\u01c1__init__": "4207d02fd7ad",
+        "x\u01c1_Cursor\u01c1__next__": "c23b7b918f8d",
+        "x\u01c1_Cursor\u01c1fork": "88ec79fa7baa",
+        "x\u01c1BaseEnumerable\u01c1__init__": "7283ded18afe"
+    },
+    "type_check_error_by_key": {},
+    "durations_by_key": {
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_1": 0.063956,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_2": 0.057729,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_3": 0.065351,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1__next____mutmut_1": 0.117641,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1__init____mutmut_1": 0.112434,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_2": 0.106799,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_3": 0.103404,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_1": 0.119296
+    },
+    "estimated_durations_by_key": {
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_1": 0.0482123660040088,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_2": 0.0482123660040088,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1fork__mutmut_3": 0.0482123660040088,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1__next____mutmut_1": 0.08494567499110417,
+        "python_linq.base_enumerable.x\u01c1_Cursor\u01c1__init____mutmut_1": 0.08555589798925212,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_1": 0.08555589798925212,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_2": 0.08555589798925212,
+        "python_linq.base_enumerable.x\u01c1BaseEnumerable\u01c1__init____mutmut_3": 0.08555589798925212
+    }
+}

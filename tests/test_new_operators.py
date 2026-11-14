@@ -18,11 +18,17 @@ def test_filter_map_discards_drop_sentinel_and_flatten_flattens_one_level():
 
 
 def test_distinct_supports_unhashable_keys_and_preserves_first_occurrences():
-    values = Enumerable([{"id": 1}, {"id": 1}, {"id": 2}])
+    values = Enumerable(
+        [
+            {"id": 1, "value": "first"},
+            {"id": 1, "value": "duplicate"},
+            {"id": 2, "value": "other"},
+        ]
+    )
 
     assert values.distinct(key=lambda item: item["id"]).to_list() == [
-        {"id": 1},
-        {"id": 2},
+        {"id": 1, "value": "first"},
+        {"id": 2, "value": "other"},
     ]
 
 
