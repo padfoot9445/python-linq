@@ -26,6 +26,7 @@ lazy from .count_enumerable import CountEnumerable
 lazy from .enumerable import Enumerable
 lazy from ._sentinels import MISSING
 lazy from .parity_enumerable import IteratorParityEnumerable
+from collections import deque
 
 
 class TakeEnumerable[T](

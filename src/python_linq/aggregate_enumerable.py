@@ -45,7 +45,7 @@ class AggregateEnumerable[T](TakeEnumerable[T]):
     def fold[V](
         self, aggregator: Callable[[V, T], V], seed: V | object = sentinel
     ) -> V:
-        return self._scan(aggregator, seed).reverse().take(1).single()
+        return self._scan(aggregator, seed).last()
 
     def reduce(self, aggregator: Callable[[T, T], T]) -> T:
         return self.fold(aggregator)
