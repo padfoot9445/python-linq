@@ -162,8 +162,7 @@ class TakeEnumerable[T](
         def inner() -> Iterator[T]:
             if n == 0:
                 return
-            items = self.to_list()
-            yield from items[-n:]
+            yield from deque(self, maxlen=n)
 
         return Enumerable(inner())
 
