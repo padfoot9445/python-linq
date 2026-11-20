@@ -630,6 +630,10 @@ class IteratorParityEnumerable[T](BaseEnumerable[T]):
         return set(self)
 
     @overload
+    def to_dictionary[K, V](
+        self: IteratorParityEnumerable[tuple[K, V]],
+    ) -> dict[K, V]: ...
+    @overload
     def to_dictionary[K: Hashable](
         self, key_selector: Callable[[T], K]
     ) -> dict[K, T]: ...
@@ -641,18 +645,32 @@ class IteratorParityEnumerable[T](BaseEnumerable[T]):
 
     def to_dictionary[K: Hashable, V](
         self,
-        key_selector: Callable[[T], K],
+        key_selector: Callable[[T], K] | None = None,
         element_selector: Callable[[T], V] | None = None,
-    ) -> dict[K, Any]:
-        result: dict[K, Any] = {}
-        for item in self:
-            item_key = key_selector(item)
-            if item_key in result:
-                raise ValueError(f"duplicate key: {item_key!r}")
-            result[item_key] = (
-                element_selector(item) if element_selector is not None else item
+    ) -> dict[Any, Any]:
+        if key_selector is None and element_selector is None:
+            cache = list(self)
+
+            k = dict(cache)
+            if len(cache) != len(k):
+                raise ValueError("duplicate key")
+            return k
+        else:
+            ks: Callable[[T], K] = (
+                key_selector if key_selector is not None else (lambda x: cast(K, x))
             )
-        return result
+            es: Callable[[T], V] = (
+                element_selector
+                if element_selector is not None
+                else (lambda x: cast(V, x))
+            )
+            result: dict[K, Any] = {}
+            for item in self:
+                item_key = ks(item)
+                if item_key in result:
+                    raise ValueError(f"duplicate key: {item_key!r}")
+                result[item_key] = es(item)
+            return result
 
     @overload
     def to_lookup[K: Hashable](
