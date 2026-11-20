@@ -7,12 +7,7 @@ lazy from .enumerable import Enumerable
 
 lazy from .base_enumerable import BaseEnumerable
 
-
-class _NoValue:
-    __slots__ = ()
-
-
-_NO_VALUE = _NoValue()
+_NO_VALUE = sentinel("_NO_VALUE")
 
 
 class ControlFlowEnum(Enum):
@@ -31,7 +26,7 @@ class ControlFlowNestedState(Enum):
 
 @dataclass
 class ControlFlow[T]:
-    val: T | _NoValue
+    val: T | _NO_VALUE
     state: ControlFlowEnum
     nested_state: ControlFlowNestedState = ControlFlowNestedState.NoNestedState
 
