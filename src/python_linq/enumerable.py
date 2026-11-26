@@ -1,5 +1,5 @@
 import itertools
-from typing import Any
+from typing import Any, Callable, Self
 
 lazy from python_linq.aggregate_enumerable import AggregateEnumerable
 lazy from .whole_sequence_operations_enumerable import WholeSequenceOperationsEnumerable
@@ -41,3 +41,5 @@ class Enumerable[T](
 
     def __getitem__(self, _: type[T]) -> type["Enumerable[Any]"]:
         return Enumerable
+    def then[TOut](self, fn: Callable[[Self], TOut]) -> TOut:
+        return fn(self)
